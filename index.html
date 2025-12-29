@@ -1,24 +1,447 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Welcome — LearnbyLLM</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Learning Tools</title>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height:1.6; padding:3rem; max-width:900px; margin:auto; }
-    header { margin-bottom:2rem; }
-    a { color:#0366d6; text-decoration:none; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #00d4ff, #7b2cbf, #f093fb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 1.1rem;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+      margin-bottom: 40px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #00d4ff;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .tool-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 25px;
+      text-decoration: none;
+      color: #fff;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-5px);
+      border-color: #00d4ff;
+      box-shadow: 0 15px 40px rgba(0, 212, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .tool-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+    }
+
+    .tool-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .tool-description {
+      color: #888;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .tool-meta {
+      margin-top: auto;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: #888;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #00d4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error {
+      text-align: center;
+      padding: 40px;
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 12px;
+    }
+
+    .search-container {
+      margin-bottom: 30px;
+    }
+
+    #searchInput {
+      width: 100%;
+      padding: 15px 25px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    #searchInput:focus {
+      border-color: #00d4ff;
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+    }
+
+    #searchInput::placeholder {
+      color: #666;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px;
+      color: #666;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: #666;
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: #00d4ff;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .stats {
+        gap: 30px;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+      }
+
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <header>
-    <h1>Hello — welcome to LearnbyLLM's GitHub Pages site</h1>
-    <p>Deployed with GitHub Pages.</p>
-  </header>
-  <main>
-    <p>This is a starter page. Edit <code>index.html</code> in the repository to change this content.</p>
-    <p>More info: <a href="https://docs.github.com/pages">GitHub Pages docs</a></p>
-  </main>
-  <footer style="margin-top:3rem;color:#666;">&copy; 2025 LearnbyLLM</footer>
+  <div class="container">
+    <header>
+      <h1>🧠 Learning Tools</h1>
+      <p class="subtitle">Interactive visualizations for understanding complex concepts</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="toolCount">-</div>
+        <div class="stat-label">Tools</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="lastUpdated">-</div>
+        <div class="stat-label">Last Updated</div>
+      </div>
+    </div>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="🔍 Search tools..." oninput="filterTools()">
+    </div>
+
+    <div class="tools-grid" id="toolsGrid">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading tools...</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>Powered by <a href="https://pages.github.com" target="_blank">GitHub Pages</a></p>
+      <p style="margin-top: 5px;">Add new tools to the <code>/tools</code> folder and they'll appear here automatically!
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // =============================================
+    // CONFIGURATION - Update these for your repo!
+    // =============================================
+    const GITHUB_USERNAME = 'LearnbyLLM';  // ← Updated!
+    const GITHUB_REPO = 'LearnbyLLM.github.io';     // ← Updated!
+    const TOOLS_FOLDER = 'tools';
+    // =============================================
+
+    // Tool metadata - add descriptions and icons for your tools
+    // Keys should match filenames (without .html)
+    const toolMetadata = {
+      'data-structures': {
+        icon: '📊',
+        description: 'Interactive explanations of arrays, stacks, queues, trees, heaps, graphs, and more.',
+        color: '#667eea'
+      },
+      'llm-intuition': {
+        icon: '🧠',
+        description: 'Understand how Large Language Models work through interactive visualizations.',
+        color: '#f093fb'
+      },
+      // Add more tools here as you create them:
+      // 'sorting-algorithms': {
+      //     icon: '🔄',
+      //     description: 'Visualize bubble sort, merge sort, quicksort, and more.',
+      //     color: '#00d4ff'
+      // },
+    };
+
+    // Default metadata for tools without custom info
+    const defaultMeta = {
+      icon: '📚',
+      description: 'An interactive learning tool.',
+      color: '#00d4ff'
+    };
+
+    let allTools = [];
+
+    // Fetch tools from GitHub API
+    async function fetchTools() {
+      const grid = document.getElementById('toolsGrid');
+
+      try {
+        const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${TOOLS_FOLDER}`;
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const files = await response.json();
+
+        // Filter for HTML files only
+        allTools = files
+          .filter(file => file.name.endsWith('.html'))
+          .map(file => {
+            const nameWithoutExt = file.name.replace('.html', '');
+            const displayName = nameWithoutExt
+              .split('-')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+
+            const meta = toolMetadata[nameWithoutExt] || defaultMeta;
+
+            return {
+              name: displayName,
+              filename: file.name,
+              path: `${TOOLS_FOLDER}/${file.name}`,
+              ...meta
+            };
+          });
+
+        // Update stats
+        document.getElementById('toolCount').textContent = allTools.length;
+
+        // Get last commit date
+        fetchLastUpdate();
+
+        // Render tools
+        renderTools(allTools);
+
+      } catch (error) {
+        console.error('Error fetching tools:', error);
+        grid.innerHTML = `
+                    <div class="error">
+                        <h3>Couldn't load tools</h3>
+                        <p>Make sure the repository and folder exist.</p>
+                        <p style="margin-top: 10px; font-size: 0.85rem;">
+                            Looking for: ${GITHUB_USERNAME}/${GITHUB_REPO}/${TOOLS_FOLDER}
+                        </p>
+                        <p style="margin-top: 15px; color: #888;">
+                            If you just created the repo, try adding a .html file to the /tools folder.
+                        </p>
+                    </div>
+                `;
+      }
+    }
+
+    async function fetchLastUpdate() {
+      try {
+        const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/commits?per_page=1`;
+        const response = await fetch(apiUrl);
+        const commits = await response.json();
+
+        if (commits.length > 0) {
+          const date = new Date(commits[0].commit.committer.date);
+          const options = { month: 'short', day: 'numeric', year: 'numeric' };
+          document.getElementById('lastUpdated').textContent = date.toLocaleDateString('en-US', options);
+        }
+      } catch (error) {
+        console.error('Error fetching last update:', error);
+      }
+    }
+
+    function renderTools(tools) {
+      const grid = document.getElementById('toolsGrid');
+
+      if (tools.length === 0) {
+        grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>No tools found</h3>
+                        <p>Try a different search term</p>
+                    </div>
+                `;
+        return;
+      }
+
+      grid.innerHTML = tools.map(tool => `
+                <a href="${tool.path}" class="tool-card">
+                    <div class="tool-icon" style="background: linear-gradient(135deg, ${tool.color}, ${adjustColor(tool.color, -30)});">
+                        ${tool.icon}
+                    </div>
+                    <div class="tool-name">${tool.name}</div>
+                    <div class="tool-description">${tool.description}</div>
+                    <div class="tool-meta">
+                        📄 ${tool.filename}
+                    </div>
+                </a>
+            `).join('');
+    }
+
+    function filterTools() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+
+      const filtered = allTools.filter(tool =>
+        tool.name.toLowerCase().includes(query) ||
+        tool.description.toLowerCase().includes(query)
+      );
+
+      renderTools(filtered);
+    }
+
+    // Helper to darken/lighten colors
+    function adjustColor(hex, amount) {
+      const num = parseInt(hex.replace('#', ''), 16);
+      const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+      const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
+      const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
+      return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+    }
+
+    // Keyboard shortcut for search
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+      }
+      if (e.key === 'Escape') {
+        document.getElementById('searchInput').value = '';
+        filterTools();
+        document.getElementById('searchInput').blur();
+      }
+    });
+
+    // Initialize
+    fetchTools();
+  </script>
 </body>
+
 </html>
