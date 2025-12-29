@@ -1,0 +1,2346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding LLMs - Interactive Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+            animation: pulse 10s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 1.2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #00d4ff;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin: 25px 0 15px;
+            color: #f093fb;
+        }
+
+        .description {
+            color: #b0b0b0;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+
+        .interactive-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .info-box {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 15px 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+        }
+
+        .info-box.warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left-color: #ffc107;
+        }
+
+        .info-box.insight {
+            background: rgba(123, 44, 191, 0.1);
+            border-left-color: #7b2cbf;
+        }
+
+        .info-box h4 {
+            color: #00d4ff;
+            margin-bottom: 8px;
+        }
+
+        .info-box.warning h4 { color: #ffc107; }
+        .info-box.insight h4 { color: #7b2cbf; }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #7b2cbf, #f093fb);
+            color: #fff;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        input, textarea {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1rem;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #666;
+        }
+
+        /* Tokenization Styles */
+        .token-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 20px 0;
+            min-height: 60px;
+            align-items: center;
+        }
+
+        .token {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            animation: tokenAppear 0.3s ease;
+            position: relative;
+        }
+
+        .token .token-id {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            color: #00d4ff;
+        }
+
+        @keyframes tokenAppear {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Embedding Visualization */
+        .embedding-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .embedding-word {
+            text-align: center;
+        }
+
+        .embedding-vector {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .embedding-dim {
+            height: 20px;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Attention Visualization */
+        .attention-matrix {
+            display: grid;
+            gap: 5px;
+            margin: 20px auto;
+            width: fit-content;
+        }
+
+        .attention-cell {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .attention-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .attention-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #888;
+        }
+
+        /* Probability Distribution */
+        .prob-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .prob-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .prob-word {
+            width: 100px;
+            text-align: right;
+            font-weight: 600;
+            color: #ccc;
+        }
+
+        .prob-bar-wrapper {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            height: 30px;
+        }
+
+        .prob-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        /* Neural Network Visualization */
+        .nn-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 40px 20px;
+            overflow-x: auto;
+        }
+
+        .nn-layer {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nn-layer-label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .nn-neuron {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nn-neuron:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        .nn-connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Temperature Slider */
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 10px;
+            color: #888;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf, #f093fb);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider-value {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-top: 10px;
+        }
+
+        /* Context Window */
+        .context-window {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .context-token {
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .context-token.in-context {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+        }
+
+        .context-token.out-of-context {
+            background: rgba(255, 255, 255, 0.1);
+            color: #666;
+        }
+
+        .context-window-marker {
+            position: absolute;
+            top: -10px;
+            background: #f093fb;
+            padding: 2px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        /* Training Visualization */
+        .training-step {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .training-step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7b2cbf, #f093fb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .training-step-content {
+            flex: 1;
+        }
+
+        .training-step-title {
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+
+        /* Comparison Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .comparison-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-item h4 {
+            color: #f093fb;
+            margin-bottom: 10px;
+        }
+
+        /* Generation Animation */
+        .generation-display {
+            font-size: 1.2rem;
+            line-height: 2;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .generated-token {
+            display: inline;
+            animation: tokenFade 0.5s ease;
+        }
+
+        @keyframes tokenFade {
+            from { opacity: 0; color: #00d4ff; }
+            to { opacity: 1; color: #fff; }
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background: #00d4ff;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Hallucination Demo */
+        .fact-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .fact-check.correct {
+            background: rgba(56, 239, 125, 0.2);
+            border-left: 4px solid #38ef7d;
+        }
+
+        .fact-check.incorrect {
+            background: rgba(255, 107, 107, 0.2);
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .fact-check.uncertain {
+            background: rgba(255, 193, 7, 0.2);
+            border-left: 4px solid #ffc107;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-tabs {
+                padding: 10px;
+            }
+
+            .nav-tab {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .attention-cell {
+                width: 35px;
+                height: 35px;
+                font-size: 0.6rem;
+            }
+        }
+
+        /* Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 30px;
+        }
+
+        .flow-step {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(123, 44, 191, 0.2));
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            min-width: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .flow-step-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: #00d4ff;
+        }
+
+        /* Stats Display */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(123, 44, 191, 0.1));
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Interactive Prompt */
+        .prompt-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .prompt-part {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .prompt-label {
+            min-width: 120px;
+            color: #888;
+        }
+
+        .prompt-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            border-left: 4px solid #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🧠 Understanding LLMs</h1>
+        <p>An interactive journey into how Large Language Models think and work</p>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="showSection('overview')">Overview</button>
+        <button class="nav-tab" onclick="showSection('tokenization')">Tokenization</button>
+        <button class="nav-tab" onclick="showSection('embeddings')">Embeddings</button>
+        <button class="nav-tab" onclick="showSection('attention')">Attention</button>
+        <button class="nav-tab" onclick="showSection('prediction')">Prediction</button>
+        <button class="nav-tab" onclick="showSection('generation')">Generation</button>
+        <button class="nav-tab" onclick="showSection('temperature')">Temperature</button>
+        <button class="nav-tab" onclick="showSection('context')">Context Window</button>
+        <button class="nav-tab" onclick="showSection('training')">Training</button>
+        <button class="nav-tab" onclick="showSection('limitations')">Limitations</button>
+        <button class="nav-tab" onclick="showSection('playground')">Playground</button>
+    </nav>
+
+    <div class="container">
+        <!-- Overview Section -->
+        <section id="overview" class="section active">
+            <div class="card">
+                <h2>🌟 What is an LLM?</h2>
+                <p class="description">
+                    A Large Language Model (LLM) is essentially a very sophisticated <strong>next-word prediction machine</strong>. 
+                    It has read billions of words from the internet and learned patterns about how language works. 
+                    When you give it text, it predicts what words should come next based on everything it learned.
+                </p>
+
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-step-icon">📝</div>
+                        <div>Your Input</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">🔤</div>
+                        <div>Tokenization</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">📊</div>
+                        <div>Embeddings</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">🎯</div>
+                        <div>Attention</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">🎲</div>
+                        <div>Prediction</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">💬</div>
+                        <div>Output</div>
+                    </div>
+                </div>
+
+                <h3>🔑 Key Insight</h3>
+                <div class="info-box insight">
+                    <h4>It's All Pattern Matching!</h4>
+                    <p>LLMs don't "understand" in the human sense. They recognize patterns in text and generate statistically likely continuations. 
+                    This is why they can seem incredibly intelligent while also making obvious mistakes.</p>
+                </div>
+
+                <h3>📊 Scale of Modern LLMs</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">175B+</div>
+                        <div class="stat-label">Parameters (GPT-3)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">45TB</div>
+                        <div class="stat-label">Training Data</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">96</div>
+                        <div class="stat-label">Transformer Layers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$4M+</div>
+                        <div class="stat-label">Training Cost</div>
+                    </div>
+                </div>
+
+                <h3>🤔 The Core Question</h3>
+                <p class="description">
+                    Every time an LLM generates text, it's answering one question over and over:
+                </p>
+                <div class="interactive-area" style="text-align: center; font-size: 1.3rem;">
+                    <em>"Given everything I've seen so far, what word is most likely to come next?"</em>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tokenization Section -->
+        <section id="tokenization" class="section">
+            <div class="card">
+                <h2>🔤 Tokenization: Breaking Text into Pieces</h2>
+                <p class="description">
+                    Before an LLM can process your text, it needs to break it into smaller pieces called <strong>tokens</strong>. 
+                    Tokens aren't always whole words - they can be parts of words, punctuation, or even single characters. 
+                    This is the first step in understanding your input.
+                </p>
+
+                <div class="info-box">
+                    <h4>Why Tokens?</h4>
+                    <p>Using tokens instead of characters or whole words gives a good balance between vocabulary size and ability to handle any text, including made-up words!</p>
+                </div>
+
+                <div class="interactive-area">
+                    <h3>🧪 Try It: See How Text Gets Tokenized</h3>
+                    <textarea id="tokenInput" rows="3" placeholder="Type something to see how it gets tokenized... Try words like 'unbelievable' or 'ChatGPT'">Hello, how are you doing today?</textarea>
+                    <div style="margin-top: 15px;">
+                        <button class="btn-primary" onclick="tokenize()">Tokenize!</button>
+                        <button class="btn-secondary" onclick="document.getElementById('tokenInput').value = 'The quick brown fox jumps over the lazy dog.'; tokenize();">Example 1</button>
+                        <button class="btn-secondary" onclick="document.getElementById('tokenInput').value = 'Supercalifragilisticexpialidocious!'; tokenize();">Long Word</button>
+                        <button class="btn-secondary" onclick="document.getElementById('tokenInput').value = 'GPT-4 is amazing! 🚀'; tokenize();">With Emoji</button>
+                    </div>
+                    
+                    <div class="token-display" id="tokenDisplay"></div>
+                    
+                    <div id="tokenStats" style="color: #888; margin-top: 10px;"></div>
+                </div>
+
+                <h3>🎨 Token Types</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>Common Words</h4>
+                        <p>Words like "the", "is", "and" are usually single tokens because they appear so often.</p>
+                        <div class="token" style="background: linear-gradient(135deg, #38ef7d, #11998e); display: inline-block; margin-top: 10px;">the</div>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Word Pieces</h4>
+                        <p>Longer or rare words get split: "unbelievable" → "un" + "believ" + "able"</p>
+                        <div style="margin-top: 10px;">
+                            <span class="token" style="background: linear-gradient(135deg, #667eea, #764ba2); display: inline-block;">un</span>
+                            <span class="token" style="background: linear-gradient(135deg, #f093fb, #f5576c); display: inline-block;">believ</span>
+                            <span class="token" style="background: linear-gradient(135deg, #4facfe, #00f2fe); display: inline-block;">able</span>
+                        </div>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Special Characters</h4>
+                        <p>Punctuation and spaces are often separate tokens.</p>
+                        <div style="margin-top: 10px;">
+                            <span class="token" style="background: linear-gradient(135deg, #fa709a, #fee140); display: inline-block;">!</span>
+                            <span class="token" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb); display: inline-block;">?</span>
+                        </div>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Numbers & Code</h4>
+                        <p>Numbers and code often get split into individual digits or characters.</p>
+                        <div style="margin-top: 10px;">
+                            <span class="token" style="background: linear-gradient(135deg, #ff6b6b, #ffa500); display: inline-block;">202</span>
+                            <span class="token" style="background: linear-gradient(135deg, #00d4ff, #0099cc); display: inline-block;">4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box warning">
+                    <h4>⚠️ Why This Matters</h4>
+                    <p>Token count affects cost (you pay per token), context limits, and even how the model "sees" your text. 
+                    A long word split into many tokens might be harder for the model to work with than short common words.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Embeddings Section -->
+        <section id="embeddings" class="section">
+            <div class="card">
+                <h2>📊 Embeddings: Words as Numbers</h2>
+                <p class="description">
+                    Computers can't understand words directly - they need numbers. <strong>Embeddings</strong> convert each token into 
+                    a long list of numbers (a vector) that captures its meaning. Similar words end up with similar numbers!
+                </p>
+
+                <div class="info-box">
+                    <h4>The Magic of Embeddings</h4>
+                    <p>In embedding space, you can do math with meanings: King - Man + Woman ≈ Queen! 
+                    Words with similar meanings cluster together in this high-dimensional space.</p>
+                </div>
+
+                <div class="interactive-area">
+                    <h3>🧪 Explore Word Similarity</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Click on words to see their "embedding" and find similar words:</p>
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn-secondary" onclick="showEmbedding('king')">👑 King</button>
+                        <button class="btn-secondary" onclick="showEmbedding('queen')">👸 Queen</button>
+                        <button class="btn-secondary" onclick="showEmbedding('man')">👨 Man</button>
+                        <button class="btn-secondary" onclick="showEmbedding('woman')">👩 Woman</button>
+                        <button class="btn-secondary" onclick="showEmbedding('happy')">😊 Happy</button>
+                        <button class="btn-secondary" onclick="showEmbedding('sad')">😢 Sad</button>
+                        <button class="btn-secondary" onclick="showEmbedding('dog')">🐕 Dog</button>
+                        <button class="btn-secondary" onclick="showEmbedding('cat')">🐱 Cat</button>
+                        <button class="btn-secondary" onclick="showEmbedding('computer')">💻 Computer</button>
+                        <button class="btn-secondary" onclick="showEmbedding('phone')">📱 Phone</button>
+                    </div>
+
+                    <div id="embeddingDisplay" class="embedding-container"></div>
+                    
+                    <div id="similarWords" style="margin-top: 20px;"></div>
+                </div>
+
+                <h3>🎯 Visualizing Embedding Space (2D Simplified)</h3>
+                <div class="interactive-area">
+                    <canvas id="embeddingCanvas" width="600" height="400" style="width: 100%; background: rgba(0,0,0,0.3); border-radius: 10px;"></canvas>
+                    <p style="color: #888; margin-top: 10px; text-align: center;">
+                        Similar words cluster together. Real embeddings have hundreds of dimensions, not just 2!
+                    </p>
+                </div>
+
+                <h3>📐 How Big Are Embeddings?</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">768</div>
+                        <div class="stat-label">Dimensions (BERT)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">12,288</div>
+                        <div class="stat-label">Dimensions (GPT-4)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">50K+</div>
+                        <div class="stat-label">Vocabulary Size</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Attention Section -->
+        <section id="attention" class="section">
+            <div class="card">
+                <h2>🎯 Attention: The Secret Sauce</h2>
+                <p class="description">
+                    <strong>Attention</strong> is the breakthrough that made modern LLMs possible. It allows the model to look at ALL 
+                    the words in your input simultaneously and figure out which words are most relevant to each other. 
+                    When processing "it", attention helps the model know what "it" refers to.
+                </p>
+
+                <div class="info-box insight">
+                    <h4>💡 The Key Question Attention Answers</h4>
+                    <p>"When I'm processing this word, how much should I pay attention to each of the other words?"</p>
+                </div>
+
+                <div class="interactive-area">
+                    <h3>🧪 Interactive Attention Visualization</h3>
+                    <p style="color: #888; margin-bottom: 15px;">See how words attend to each other. Brighter = more attention. Click a word to see what it focuses on:</p>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn-secondary" onclick="setAttentionSentence('The cat sat on the mat')">The cat sat on the mat</button>
+                        <button class="btn-secondary" onclick="setAttentionSentence('The bank by the river')">The bank by the river</button>
+                        <button class="btn-secondary" onclick="setAttentionSentence('I love programming')">I love programming</button>
+                    </div>
+
+                    <div id="attentionSentence" style="font-size: 1.2rem; margin-bottom: 20px; text-align: center;"></div>
+                    
+                    <div style="display: flex; justify-content: center;">
+                        <div id="attentionMatrix"></div>
+                    </div>
+                    
+                    <div id="attentionExplanation" style="margin-top: 20px; text-align: center; color: #888;"></div>
+                </div>
+
+                <h3>🔄 Self-Attention Explained</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>Query (Q)</h4>
+                        <p>"What am I looking for?"</p>
+                        <p style="color: #888; font-size: 0.9rem;">Each word asks a question about what information it needs.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Key (K)</h4>
+                        <p>"What do I contain?"</p>
+                        <p style="color: #888; font-size: 0.9rem;">Each word advertises what information it can provide.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Value (V)</h4>
+                        <p>"Here's my information"</p>
+                        <p style="color: #888; font-size: 0.9rem;">The actual content that gets passed along if attention is high.</p>
+                    </div>
+                </div>
+
+                <h3>🎭 Multi-Head Attention</h3>
+                <p class="description">
+                    LLMs use multiple attention "heads" in parallel - each head can learn to focus on different types of relationships:
+                </p>
+                <div class="interactive-area">
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+                        <div class="flow-step" style="min-width: 120px;">
+                            <div>Head 1</div>
+                            <div style="font-size: 0.8rem; color: #888;">Syntax</div>
+                        </div>
+                        <div class="flow-step" style="min-width: 120px;">
+                            <div>Head 2</div>
+                            <div style="font-size: 0.8rem; color: #888;">Coreference</div>
+                        </div>
+                        <div class="flow-step" style="min-width: 120px;">
+                            <div>Head 3</div>
+                            <div style="font-size: 0.8rem; color: #888;">Semantics</div>
+                        </div>
+                        <div class="flow-step" style="min-width: 120px;">
+                            <div>Head 4</div>
+                            <div style="font-size: 0.8rem; color: #888;">Position</div>
+                        </div>
+                    </div>
+                    <p style="text-align: center; color: #888; margin-top: 15px;">
+                        GPT-4 has 96 attention heads per layer!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Prediction Section -->
+        <section id="prediction" class="section">
+            <div class="card">
+                <h2>🎲 Prediction: Choosing the Next Word</h2>
+                <p class="description">
+                    After processing your input through all its layers, the LLM produces a <strong>probability distribution</strong> 
+                    over all possible next tokens. It doesn't just pick one word - it assigns a probability to EVERY word in its vocabulary!
+                </p>
+
+                <div class="interactive-area">
+                    <h3>🧪 See Next-Word Probabilities</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Type a partial sentence and see what the model might predict next:</p>
+                    
+                    <input type="text" id="predictionInput" placeholder="Type a sentence..." value="The capital of France is">
+                    <button class="btn-primary" onclick="showPrediction()" style="margin-top: 10px;">Show Predictions</button>
+                    
+                    <div style="margin-top: 10px;">
+                        <button class="btn-secondary" onclick="document.getElementById('predictionInput').value = 'Once upon a time'; showPrediction();">Once upon a time</button>
+                        <button class="btn-secondary" onclick="document.getElementById('predictionInput').value = 'The weather today is'; showPrediction();">The weather today is</button>
+                        <button class="btn-secondary" onclick="document.getElementById('predictionInput').value = 'I went to the'; showPrediction();">I went to the</button>
+                    </div>
+                    
+                    <div id="predictionDisplay" style="margin-top: 20px;"></div>
+                </div>
+
+                <h3>📊 The Softmax Function</h3>
+                <p class="description">
+                    The model's raw outputs (logits) are converted to probabilities using <strong>softmax</strong>, 
+                    which ensures all probabilities sum to 1 and emphasizes the differences between options.
+                </p>
+                
+                <div class="interactive-area">
+                    <h3>🧪 Softmax Visualization</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Adjust the raw scores (logits) and see how softmax converts them to probabilities:</p>
+                    
+                    <div id="softmaxSliders">
+                        <div style="margin-bottom: 15px;">
+                            <label>Paris: <span id="logit1Val">5.0</span></label>
+                            <input type="range" id="logit1" min="-5" max="10" step="0.1" value="5" oninput="updateSoftmax()">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label>London: <span id="logit2Val">2.0</span></label>
+                            <input type="range" id="logit2" min="-5" max="10" step="0.1" value="2" oninput="updateSoftmax()">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label>Berlin: <span id="logit3Val">1.0</span></label>
+                            <input type="range" id="logit3" min="-5" max="10" step="0.1" value="1" oninput="updateSoftmax()">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label>Rome: <span id="logit4Val">0.5</span></label>
+                            <input type="range" id="logit4" min="-5" max="10" step="0.1" value="0.5" oninput="updateSoftmax()">
+                        </div>
+                    </div>
+                    
+                    <div id="softmaxOutput" class="prob-container"></div>
+                </div>
+
+                <div class="info-box">
+                    <h4>🎯 Key Insight</h4>
+                    <p>The model is never 100% certain! Even for obvious completions, there's always some probability assigned to other words. 
+                    This uncertainty is actually useful - it allows for creativity and variation.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Generation Section -->
+        <section id="generation" class="section">
+            <div class="card">
+                <h2>✨ Generation: Creating Text Token by Token</h2>
+                <p class="description">
+                    LLMs generate text <strong>one token at a time</strong>. Each new token is added to the context, 
+                    and then the whole process repeats. This is called <strong>autoregressive generation</strong>.
+                </p>
+
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <div class="flow-step-icon">📝</div>
+                        <div>Input</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">🔮</div>
+                        <div>Predict Next</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">➕</div>
+                        <div>Add to Context</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">🔁</div>
+                        <div>Repeat</div>
+                    </div>
+                </div>
+
+                <div class="interactive-area">
+                    <h3>🧪 Watch Text Generate Token by Token</h3>
+                    <input type="text" id="generationPrompt" placeholder="Enter a prompt..." value="In a world where robots">
+                    <div style="margin-top: 15px;">
+                        <button class="btn-primary" onclick="startGeneration()">Generate</button>
+                        <button class="btn-secondary" onclick="stopGeneration()">Stop</button>
+                        <button class="btn-secondary" onclick="clearGeneration()">Clear</button>
+                    </div>
+                    
+                    <div class="generation-display" id="generationDisplay">
+                        <span id="generatedText"></span><span class="cursor" id="generationCursor" style="display: none;"></span>
+                    </div>
+                    
+                    <div id="generationStats" style="margin-top: 15px; color: #888;"></div>
+                </div>
+
+                <h3>🎯 Sampling Strategies</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>Greedy</h4>
+                        <p>Always pick the highest probability token. Fast but repetitive.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Top-K</h4>
+                        <p>Sample from the K most likely tokens. More variety!</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Top-P (Nucleus)</h4>
+                        <p>Sample from tokens that make up P% of probability mass.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Beam Search</h4>
+                        <p>Explore multiple paths and pick the best overall sequence.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Temperature Section -->
+        <section id="temperature" class="section">
+            <div class="card">
+                <h2>🌡️ Temperature: Controlling Creativity</h2>
+                <p class="description">
+                    <strong>Temperature</strong> is a parameter that controls how "creative" or "random" the model's outputs are. 
+                    It works by adjusting the probability distribution before sampling.
+                </p>
+
+                <div class="interactive-area">
+                    <h3>🧪 See How Temperature Affects Output</h3>
+                    
+                    <div class="slider-container">
+                        <label>Temperature:</label>
+                        <input type="range" id="tempSlider" min="0.1" max="2" step="0.1" value="1" oninput="updateTemperature()">
+                        <div class="slider-value" id="tempValue">1.0</div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; color: #888; margin-bottom: 20px;">
+                        <span>🎯 Focused/Deterministic</span>
+                        <span>🎨 Creative/Random</span>
+                    </div>
+                    
+                    <p style="margin-bottom: 15px;">Prompt: "The best way to learn programming is"</p>
+                    
+                    <div id="temperatureProbs" class="prob-container"></div>
+                    
+                    <div id="temperatureExplanation" class="info-box" style="margin-top: 20px;"></div>
+                </div>
+
+                <h3>📊 Temperature Effects</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>🥶 Low (0.1-0.3)</h4>
+                        <p>Very predictable, always picks the "safe" answer. Good for factual tasks.</p>
+                        <p style="color: #00d4ff; margin-top: 10px;">Best for: Code, facts, translation</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>😊 Medium (0.7-1.0)</h4>
+                        <p>Balanced - some creativity while staying coherent. The default sweet spot.</p>
+                        <p style="color: #00d4ff; margin-top: 10px;">Best for: General conversation, writing</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>🔥 High (1.5-2.0)</h4>
+                        <p>Very creative and surprising, but may become incoherent or nonsensical.</p>
+                        <p style="color: #00d4ff; margin-top: 10px;">Best for: Brainstorming, poetry, humor</p>
+                    </div>
+                </div>
+
+                <div class="info-box warning">
+                    <h4>⚠️ The Math Behind Temperature</h4>
+                    <p>Temperature divides the logits before softmax: softmax(logits / T). 
+                    Lower T makes high probabilities higher and low probabilities lower. 
+                    Higher T flattens everything, making unlikely tokens more probable.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Context Window Section -->
+        <section id="context" class="section">
+            <div class="card">
+                <h2>📏 Context Window: The Model's Memory</h2>
+                <p class="description">
+                    The <strong>context window</strong> is the maximum amount of text an LLM can "see" at once. 
+                    It includes both your input AND any previous conversation. When you exceed it, 
+                    older content gets "forgotten" (truncated).
+                </p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">4K</div>
+                        <div class="stat-label">GPT-3.5 Tokens</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">128K</div>
+                        <div class="stat-label">GPT-4 Turbo Tokens</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">200K</div>
+                        <div class="stat-label">Claude 3 Tokens</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">1M+</div>
+                        <div class="stat-label">Gemini 1.5 Tokens</div>
+                    </div>
+                </div>
+
+                <div class="interactive-area">
+                    <h3>🧪 Visualize Context Window</h3>
+                    
+                    <div class="slider-container">
+                        <label>Context Window Size: <span id="contextSizeLabel">20</span> tokens</label>
+                        <input type="range" id="contextSize" min="5" max="50" value="20" oninput="updateContextWindow()">
+                    </div>
+                    
+                    <div id="contextWindowDemo" style="margin-top: 20px;">
+                        <p style="color: #888; margin-bottom: 10px;">The conversation so far:</p>
+                        <div class="context-window" id="contextTokens"></div>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="addToContext()" style="margin-top: 15px;">Add More Text</button>
+                    <button class="btn-secondary" onclick="resetContext()">Reset</button>
+                    
+                    <div id="contextExplanation" style="margin-top: 15px; color: #888;"></div>
+                </div>
+
+                <h3>🤔 Why Context Limits Matter</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>Memory Limitations</h4>
+                        <p>The model literally cannot see text outside its context window. It's not that it forgot - it never saw it!</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Conversation Coherence</h4>
+                        <p>Long conversations may lose early context, causing the model to repeat itself or forget instructions.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Cost Implications</h4>
+                        <p>Longer contexts = more computation = higher costs and slower responses.</p>
+                    </div>
+                </div>
+
+                <div class="info-box insight">
+                    <h4>💡 Pro Tip</h4>
+                    <p>Put important instructions at the BEGINNING and END of your prompt - 
+                    research shows models pay more attention to these positions (the "lost in the middle" problem).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Training Section -->
+        <section id="training" class="section">
+            <div class="card">
+                <h2>📚 Training: How LLMs Learn</h2>
+                <p class="description">
+                    LLMs are trained in multiple stages, each building on the previous. Understanding this helps explain 
+                    both their capabilities and limitations.
+                </p>
+
+                <div class="training-step">
+                    <div class="training-step-number">1</div>
+                    <div class="training-step-content">
+                        <div class="training-step-title">Pre-training: Learning Language</div>
+                        <p style="color: #888;">The model reads BILLIONS of words from the internet, books, code, etc. 
+                        It learns to predict the next word, absorbing grammar, facts, and patterns.</p>
+                        <p style="color: #00d4ff; margin-top: 5px;">Duration: Weeks to months | Cost: Millions of dollars</p>
+                    </div>
+                </div>
+
+                <div class="training-step">
+                    <div class="training-step-number">2</div>
+                    <div class="training-step-content">
+                        <div class="training-step-title">Supervised Fine-tuning (SFT)</div>
+                        <p style="color: #888;">Humans write high-quality example conversations. The model learns 
+                        to mimic this style - being helpful, following instructions, etc.</p>
+                        <p style="color: #00d4ff; margin-top: 5px;">Duration: Days | Examples: ~100,000</p>
+                    </div>
+                </div>
+
+                <div class="training-step">
+                    <div class="training-step-number">3</div>
+                    <div class="training-step-content">
+                        <div class="training-step-title">RLHF: Learning Preferences</div>
+                        <p style="color: #888;">Humans rank different model outputs from best to worst. 
+                        The model learns what humans prefer through reinforcement learning.</p>
+                        <p style="color: #00d4ff; margin-top: 5px;">This is what makes ChatGPT feel "aligned" with human values</p>
+                    </div>
+                </div>
+
+                <div class="interactive-area">
+                    <h3>🧪 See Pre-training in Action</h3>
+                    <p style="color: #888; margin-bottom: 15px;">
+                        The model sees text with a word hidden and tries to predict it. 
+                        Click "Train" to see how it improves:
+                    </p>
+                    
+                    <div id="trainingDemo">
+                        <div style="font-size: 1.2rem; margin-bottom: 15px;">
+                            "The cat sat on the <span id="maskedWord" style="background: #7b2cbf; padding: 5px 15px; border-radius: 5px;">???</span>"
+                        </div>
+                        
+                        <div id="trainingPredictions" style="margin-bottom: 15px;"></div>
+                        
+                        <button class="btn-primary" onclick="trainStep()">Train Step</button>
+                        <button class="btn-secondary" onclick="resetTraining()">Reset</button>
+                        
+                        <div id="trainingProgress" style="margin-top: 15px;">
+                            <div style="color: #888;">Training steps: <span id="stepCount">0</span></div>
+                            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 10px;">
+                                <div id="trainingBar" style="height: 10px; width: 0%; background: linear-gradient(90deg, #00d4ff, #7b2cbf); transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>🎯 What the Model Actually Learns</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>✅ Grammar & Syntax</h4>
+                        <p>How to construct valid sentences in many languages.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>✅ Facts & Knowledge</h4>
+                        <p>Information from training data (but can be outdated or wrong!).</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>✅ Reasoning Patterns</h4>
+                        <p>How to chain logical steps (mostly from seeing examples).</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>✅ Style & Tone</h4>
+                        <p>How to write formally, casually, technically, creatively, etc.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>❌ Real Understanding</h4>
+                        <p>It's pattern matching, not true comprehension.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>❌ Real-time Info</h4>
+                        <p>Knowledge is frozen at training cutoff date.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Limitations Section -->
+        <section id="limitations" class="section">
+            <div class="card">
+                <h2>⚠️ Limitations: What LLMs Can't Do</h2>
+                <p class="description">
+                    Understanding limitations is just as important as understanding capabilities. 
+                    LLMs are powerful but fundamentally limited in specific ways.
+                </p>
+
+                <h3>🎭 Hallucinations</h3>
+                <p class="description">
+                    LLMs confidently generate false information because they're optimizing for 
+                    "plausible-sounding text," not truth.
+                </p>
+                
+                <div class="interactive-area">
+                    <h3>🧪 Spot the Hallucination</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Can you identify which "facts" are real vs hallucinated?</p>
+                    
+                    <div id="hallucinationQuiz">
+                        <div class="fact-check" id="fact1" onclick="revealFact(1)">
+                            <span>🤔</span>
+                            <span>"The Great Wall of China is visible from space with the naked eye."</span>
+                        </div>
+                        <div class="fact-check" id="fact2" onclick="revealFact(2)">
+                            <span>🤔</span>
+                            <span>"Python was created by Guido van Rossum in 1991."</span>
+                        </div>
+                        <div class="fact-check" id="fact3" onclick="revealFact(3)">
+                            <span>🤔</span>
+                            <span>"The scientific name for a group of flamingos is a 'magnificence'."</span>
+                        </div>
+                        <div class="fact-check" id="fact4" onclick="revealFact(4)">
+                            <span>🤔</span>
+                            <span>"Einstein failed math in school."</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-secondary" onclick="revealAllFacts()" style="margin-top: 15px;">Reveal All</button>
+                </div>
+
+                <h3>🧮 Math & Logic Failures</h3>
+                <div class="interactive-area">
+                    <p style="color: #888; margin-bottom: 15px;">LLMs often fail at problems requiring precise calculation:</p>
+                    
+                    <div class="comparison-grid">
+                        <div class="comparison-item">
+                            <h4>Easy for LLMs ✅</h4>
+                            <p>"What is 2 + 2?"</p>
+                            <p style="color: #38ef7d;">Answer: 4</p>
+                        </div>
+                        <div class="comparison-item">
+                            <h4>Hard for LLMs ❌</h4>
+                            <p>"What is 7,849 × 6,523?"</p>
+                            <p style="color: #ff6b6b;">Often wrong!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-box" style="margin-top: 15px;">
+                        <h4>Why?</h4>
+                        <p>LLMs process numbers as tokens, not quantities. "7849" might be split into "78" + "49". 
+                        They can't actually compute - they pattern-match to similar problems they've seen.</p>
+                    </div>
+                </div>
+
+                <h3>🚫 Other Key Limitations</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>❌ No Real-time Information</h4>
+                        <p>Knowledge frozen at training cutoff. Can't browse the internet or know current events.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>❌ No Persistent Memory</h4>
+                        <p>Each conversation starts fresh. Doesn't remember previous chats (unless explicitly designed to).</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>❌ No True Reasoning</h4>
+                        <p>Pattern matches to similar problems. Novel logic puzzles often fail.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>❌ Sycophancy</h4>
+                        <p>Tends to agree with users and tell them what they want to hear.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>❌ Counting Problems</h4>
+                        <p>"How many R's in strawberry?" Often gets simple counting wrong due to tokenization.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>❌ Spatial Reasoning</h4>
+                        <p>Struggles with 3D visualization, directions, and physical relationships.</p>
+                    </div>
+                </div>
+
+                <div class="info-box warning">
+                    <h4>⚠️ The Confidence Problem</h4>
+                    <p>LLMs express everything with similar confidence. A completely made-up fact sounds 
+                    just as confident as a well-established truth. Always verify important information!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Playground Section -->
+        <section id="playground" class="section">
+            <div class="card">
+                <h2>🎮 Playground: Putting It All Together</h2>
+                <p class="description">
+                    Now that you understand the components, let's see them all work together in a simulated LLM!
+                </p>
+
+                <div class="interactive-area">
+                    <h3>🤖 Mini LLM Simulator</h3>
+                    
+                    <div class="prompt-builder">
+                        <div class="prompt-part">
+                            <span class="prompt-label">System Prompt:</span>
+                            <input type="text" id="systemPrompt" placeholder="You are a helpful assistant..." value="You are a friendly AI assistant.">
+                        </div>
+                        <div class="prompt-part">
+                            <span class="prompt-label">User Message:</span>
+                            <input type="text" id="userMessage" placeholder="Your message..." value="Tell me a joke about programming">
+                        </div>
+                        <div class="prompt-part">
+                            <span class="prompt-label">Temperature:</span>
+                            <input type="range" id="playgroundTemp" min="0.1" max="2" step="0.1" value="0.7" style="flex: 1;">
+                            <span id="playgroundTempVal" style="min-width: 40px;">0.7</span>
+                        </div>
+                        <div class="prompt-part">
+                            <span class="prompt-label">Max Tokens:</span>
+                            <input type="range" id="playgroundMaxTokens" min="10" max="100" value="50" style="flex: 1;">
+                            <span id="playgroundMaxVal" style="min-width: 40px;">50</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="runPlayground()" style="margin-top: 20px;">🚀 Generate Response</button>
+                    
+                    <div class="prompt-preview" id="playgroundOutput" style="margin-top: 20px;">
+                        <p style="color: #888;">Response will appear here...</p>
+                    </div>
+                    
+                    <div id="playgroundProcess" style="margin-top: 20px;"></div>
+                </div>
+
+                <h3>🧠 What You've Learned</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item" style="border-color: #00d4ff;">
+                        <h4>✅ Tokenization</h4>
+                        <p>Text gets broken into tokens before processing.</p>
+                    </div>
+                    <div class="comparison-item" style="border-color: #7b2cbf;">
+                        <h4>✅ Embeddings</h4>
+                        <p>Tokens become number vectors that capture meaning.</p>
+                    </div>
+                    <div class="comparison-item" style="border-color: #f093fb;">
+                        <h4>✅ Attention</h4>
+                        <p>The model decides which words to focus on for each output.</p>
+                    </div>
+                    <div class="comparison-item" style="border-color: #38ef7d;">
+                        <h4>✅ Prediction</h4>
+                        <p>Probabilities assigned to all possible next tokens.</p>
+                    </div>
+                    <div class="comparison-item" style="border-color: #fee140;">
+                        <h4>✅ Temperature</h4>
+                        <p>Controls creativity vs. predictability in sampling.</p>
+                    </div>
+                    <div class="comparison-item" style="border-color: #ff6b6b;">
+                        <h4>✅ Limitations</h4>
+                        <p>Pattern matching, not true understanding. Verify facts!</p>
+                    </div>
+                </div>
+
+                <div class="info-box insight">
+                    <h4>🎓 Keep Learning</h4>
+                    <p>This is a simplified model of how LLMs work. Real systems are far more complex, 
+                    with billions of parameters, sophisticated architectures, and extensive safety training. 
+                    But the core intuitions you've built here will help you use and understand these tools better!</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Initialize section-specific visualizations
+            if (sectionId === 'embeddings') drawEmbeddingSpace();
+            if (sectionId === 'attention') setAttentionSentence('The cat sat on the mat');
+            if (sectionId === 'prediction') showPrediction();
+            if (sectionId === 'temperature') updateTemperature();
+            if (sectionId === 'context') resetContext();
+            if (sectionId === 'training') resetTraining();
+        }
+
+        // ==================== TOKENIZATION ====================
+        const tokenColors = [
+            'linear-gradient(135deg, #667eea, #764ba2)',
+            'linear-gradient(135deg, #f093fb, #f5576c)',
+            'linear-gradient(135deg, #4facfe, #00f2fe)',
+            'linear-gradient(135deg, #43e97b, #38f9d7)',
+            'linear-gradient(135deg, #fa709a, #fee140)',
+            'linear-gradient(135deg, #a18cd1, #fbc2eb)',
+            'linear-gradient(135deg, #ff6b6b, #ffa500)',
+            'linear-gradient(135deg, #11998e, #38ef7d)'
+        ];
+
+        function tokenize() {
+            const text = document.getElementById('tokenInput').value;
+            const display = document.getElementById('tokenDisplay');
+            const stats = document.getElementById('tokenStats');
+            
+            // Simulate BPE-like tokenization
+            const tokens = simulateTokenization(text);
+            
+            display.innerHTML = tokens.map((token, idx) => {
+                const color = tokenColors[idx % tokenColors.length];
+                const displayToken = token.replace(/ /g, '␣');
+                return `<div class="token" style="background: ${color}; animation-delay: ${idx * 0.05}s;">
+                    ${displayToken}
+                    <span class="token-id">${1000 + idx}</span>
+                </div>`;
+            }).join('');
+            
+            stats.innerHTML = `<strong>${tokens.length}</strong> tokens | <strong>${text.length}</strong> characters | Ratio: <strong>${(text.length / tokens.length).toFixed(2)}</strong> chars/token`;
+        }
+
+        function simulateTokenization(text) {
+            // Simplified tokenization that mimics BPE behavior
+            const commonWords = ['the', 'is', 'a', 'an', 'to', 'in', 'on', 'at', 'for', 'and', 'or', 'but', 'not', 'you', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used', 'it', 'its', 'this', 'that', 'these', 'those', 'i', 'me', 'my', 'we', 'our', 'he', 'him', 'his', 'she', 'her', 'they', 'them', 'their', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'too', 'very', 'just', 'also', 'now', 'here', 'there', 'then', 'so', 'than', 'of', 'with', 'as', 'by', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'from', 'up', 'down', 'out', 'off', 'over', 'under', 'again', 'further', 'once', 'hello', 'hi', 'hey', 'today', 'doing', 'how'];
+            
+            const tokens = [];
+            let remaining = text;
+            
+            while (remaining.length > 0) {
+                let matched = false;
+                
+                // Check for common words first
+                for (const word of commonWords) {
+                    if (remaining.toLowerCase().startsWith(word)) {
+                        const nextChar = remaining[word.length];
+                        if (!nextChar || !/[a-zA-Z]/.test(nextChar)) {
+                            tokens.push(remaining.substring(0, word.length));
+                            remaining = remaining.substring(word.length);
+                            matched = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!matched) {
+                    // Handle spaces
+                    if (remaining[0] === ' ') {
+                        tokens.push(' ');
+                        remaining = remaining.substring(1);
+                    }
+                    // Handle punctuation
+                    else if (/[.,!?;:'"\-()[\]{}]/.test(remaining[0])) {
+                        tokens.push(remaining[0]);
+                        remaining = remaining.substring(1);
+                    }
+                    // Handle emojis
+                    else if (/[\u{1F300}-\u{1F9FF}]/u.test(remaining[0])) {
+                        tokens.push(remaining.substring(0, 2));
+                        remaining = remaining.substring(2);
+                    }
+                    // Split longer words into chunks
+                    else {
+                        const word = remaining.match(/^[a-zA-Z]+/);
+                        if (word) {
+                            const w = word[0];
+                            if (w.length <= 4) {
+                                tokens.push(w);
+                            } else {
+                                // Split into subword tokens
+                                const chunks = [];
+                                for (let i = 0; i < w.length; i += 3 + Math.floor(Math.random() * 2)) {
+                                    chunks.push(w.substring(i, Math.min(i + 3 + Math.floor(Math.random() * 2), w.length)));
+                                }
+                                tokens.push(...chunks);
+                            }
+                            remaining = remaining.substring(w.length);
+                        } else {
+                            // Handle numbers and other characters
+                            const num = remaining.match(/^[0-9]+/);
+                            if (num) {
+                                if (num[0].length <= 3) {
+                                    tokens.push(num[0]);
+                                } else {
+                                    for (let i = 0; i < num[0].length; i += 2) {
+                                        tokens.push(num[0].substring(i, Math.min(i + 2, num[0].length)));
+                                    }
+                                }
+                                remaining = remaining.substring(num[0].length);
+                            } else {
+                                tokens.push(remaining[0]);
+                                remaining = remaining.substring(1);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return tokens;
+        }
+
+        // ==================== EMBEDDINGS ====================
+        const wordEmbeddings = {
+            'king': { vec: [0.8, 0.9, 0.7, 0.2, 0.1], similar: ['queen', 'prince', 'ruler', 'monarch'] },
+            'queen': { vec: [0.8, 0.85, 0.75, 0.8, 0.1], similar: ['king', 'princess', 'monarch', 'royal'] },
+            'man': { vec: [0.3, 0.9, 0.2, 0.1, 0.5], similar: ['woman', 'person', 'human', 'male'] },
+            'woman': { vec: [0.3, 0.85, 0.25, 0.9, 0.5], similar: ['man', 'person', 'human', 'female'] },
+            'happy': { vec: [0.1, 0.2, 0.9, 0.3, 0.8], similar: ['joyful', 'glad', 'pleased', 'cheerful'] },
+            'sad': { vec: [0.1, 0.2, 0.1, 0.3, 0.2], similar: ['unhappy', 'depressed', 'gloomy', 'sorrowful'] },
+            'dog': { vec: [0.6, 0.3, 0.4, 0.2, 0.9], similar: ['cat', 'pet', 'puppy', 'animal'] },
+            'cat': { vec: [0.55, 0.3, 0.35, 0.25, 0.85], similar: ['dog', 'pet', 'kitten', 'animal'] },
+            'computer': { vec: [0.9, 0.1, 0.5, 0.4, 0.3], similar: ['laptop', 'phone', 'device', 'machine'] },
+            'phone': { vec: [0.85, 0.1, 0.45, 0.35, 0.35], similar: ['computer', 'mobile', 'device', 'smartphone'] }
+        };
+
+        function showEmbedding(word) {
+            const display = document.getElementById('embeddingDisplay');
+            const similar = document.getElementById('similarWords');
+            const data = wordEmbeddings[word];
+            
+            // Show embedding visualization
+            display.innerHTML = `
+                <div class="embedding-word">
+                    <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">${word}</div>
+                    <div class="embedding-vector">
+                        ${data.vec.map((v, i) => `
+                            <div class="embedding-dim" style="width: ${v * 100}px; background: ${tokenColors[i]};">
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="color: #888; font-size: 0.8rem; margin-top: 5px;">
+                        [${data.vec.map(v => v.toFixed(2)).join(', ')}]
+                    </div>
+                </div>
+            `;
+            
+            similar.innerHTML = `
+                <div class="info-box">
+                    <h4>Similar Words (by embedding distance)</h4>
+                    <p>${data.similar.map(w => `<span style="background: rgba(0,212,255,0.2); padding: 5px 10px; border-radius: 5px; margin: 3px; display: inline-block;">${w}</span>`).join('')}</p>
+                </div>
+            `;
+        }
+
+        function drawEmbeddingSpace() {
+            const canvas = document.getElementById('embeddingCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 400;
+            
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Word positions in 2D (simplified from high-dimensional)
+            const positions = {
+                'king': { x: 0.7, y: 0.2 },
+                'queen': { x: 0.75, y: 0.25 },
+                'man': { x: 0.6, y: 0.35 },
+                'woman': { x: 0.65, y: 0.4 },
+                'happy': { x: 0.2, y: 0.7 },
+                'sad': { x: 0.15, y: 0.75 },
+                'dog': { x: 0.8, y: 0.7 },
+                'cat': { x: 0.85, y: 0.75 },
+                'computer': { x: 0.3, y: 0.3 },
+                'phone': { x: 0.35, y: 0.35 }
+            };
+            
+            // Draw clusters
+            const clusters = [
+                { words: ['king', 'queen', 'man', 'woman'], color: 'rgba(123, 44, 191, 0.2)', label: 'People' },
+                { words: ['dog', 'cat'], color: 'rgba(0, 212, 255, 0.2)', label: 'Animals' },
+                { words: ['computer', 'phone'], color: 'rgba(56, 239, 125, 0.2)', label: 'Technology' },
+                { words: ['happy', 'sad'], color: 'rgba(250, 112, 154, 0.2)', label: 'Emotions' }
+            ];
+            
+            clusters.forEach(cluster => {
+                const points = cluster.words.map(w => ({
+                    x: positions[w].x * canvas.width,
+                    y: positions[w].y * canvas.height
+                }));
+                
+                const centerX = points.reduce((a, p) => a + p.x, 0) / points.length;
+                const centerY = points.reduce((a, p) => a + p.y, 0) / points.length;
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
+                ctx.fillStyle = cluster.color;
+                ctx.fill();
+                
+                ctx.fillStyle = '#888';
+                ctx.font = '12px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText(cluster.label, centerX, centerY - 60);
+            });
+            
+            // Draw words
+            Object.entries(positions).forEach(([word, pos]) => {
+                const x = pos.x * canvas.width;
+                const y = pos.y * canvas.height;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#00d4ff';
+                ctx.fill();
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText(word, x, y - 15);
+            });
+            
+            // Draw relationship arrow (king - man + woman = queen)
+            ctx.strokeStyle = '#f093fb';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            
+            const kingPos = { x: positions.king.x * canvas.width, y: positions.king.y * canvas.height };
+            const queenPos = { x: positions.queen.x * canvas.width, y: positions.queen.y * canvas.height };
+            
+            ctx.beginPath();
+            ctx.moveTo(kingPos.x, kingPos.y);
+            ctx.lineTo(queenPos.x, queenPos.y);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+        }
+
+        // ==================== ATTENTION ====================
+        let currentAttentionWords = [];
+
+        function setAttentionSentence(sentence) {
+            currentAttentionWords = sentence.split(' ');
+            document.getElementById('attentionSentence').innerHTML = currentAttentionWords.map((w, i) => 
+                `<span style="cursor: pointer; padding: 5px 10px; border-radius: 5px; background: rgba(0,212,255,0.2); margin: 3px;" onclick="highlightAttention(${i})">${w}</span>`
+            ).join(' ');
+            
+            renderAttentionMatrix();
+        }
+
+        function renderAttentionMatrix() {
+            const container = document.getElementById('attentionMatrix');
+            const n = currentAttentionWords.length;
+            
+            // Generate attention weights
+            const attention = generateAttentionWeights(currentAttentionWords);
+            
+            let html = `<div style="display: grid; grid-template-columns: auto repeat(${n}, 50px); gap: 5px;">`;
+            
+            // Header row
+            html += `<div></div>`;
+            currentAttentionWords.forEach(w => {
+                html += `<div class="attention-label" style="font-size: 0.75rem;">${w}</div>`;
+            });
+            
+            // Data rows
+            for (let i = 0; i < n; i++) {
+                html += `<div class="attention-label" style="font-size: 0.75rem;">${currentAttentionWords[i]}</div>`;
+                for (let j = 0; j < n; j++) {
+                    const weight = attention[i][j];
+                    const intensity = Math.floor(weight * 255);
+                    const color = `rgb(${intensity}, ${Math.floor(intensity * 0.5)}, ${255 - intensity})`;
+                    html += `<div class="attention-cell" style="background: ${color};" 
+                             title="${currentAttentionWords[i]} → ${currentAttentionWords[j]}: ${weight.toFixed(2)}"
+                             onclick="explainAttention(${i}, ${j}, ${weight.toFixed(2)})">${weight.toFixed(1)}</div>`;
+                }
+            }
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function generateAttentionWeights(words) {
+            const n = words.length;
+            const weights = [];
+            
+            for (let i = 0; i < n; i++) {
+                weights[i] = [];
+                let sum = 0;
+                for (let j = 0; j < n; j++) {
+                    // Simulate attention patterns
+                    let w = Math.random() * 0.3;
+                    
+                    // Self-attention boost
+                    if (i === j) w += 0.3;
+                    
+                    // Adjacent words
+                    if (Math.abs(i - j) === 1) w += 0.2;
+                    
+                    // Special patterns
+                    if (words[i].toLowerCase() === 'the' && j === i + 1) w += 0.3;
+                    if (words[j].toLowerCase() === 'the' && i === j + 1) w += 0.2;
+                    
+                    weights[i][j] = w;
+                    sum += w;
+                }
+                // Normalize
+                for (let j = 0; j < n; j++) {
+                    weights[i][j] /= sum;
+                }
+            }
+            
+            return weights;
+        }
+
+        function highlightAttention(idx) {
+            document.getElementById('attentionExplanation').innerHTML = 
+                `When processing "<strong>${currentAttentionWords[idx]}</strong>", the model looks at all words to understand context.`;
+        }
+
+        function explainAttention(i, j, weight) {
+            document.getElementById('attentionExplanation').innerHTML = 
+                `"<strong>${currentAttentionWords[i]}</strong>" pays <strong>${(weight * 100).toFixed(0)}%</strong> attention to "<strong>${currentAttentionWords[j]}</strong>"`;
+        }
+
+        // ==================== PREDICTION ====================
+        const predictionData = {
+            'The capital of France is': [
+                { word: 'Paris', prob: 0.85 },
+                { word: 'a', prob: 0.05 },
+                { word: 'the', prob: 0.03 },
+                { word: 'located', prob: 0.02 },
+                { word: 'known', prob: 0.02 },
+                { word: 'called', prob: 0.01 },
+                { word: 'Lyon', prob: 0.01 },
+                { word: 'France', prob: 0.01 }
+            ],
+            'Once upon a time': [
+                { word: ',', prob: 0.35 },
+                { word: 'there', prob: 0.30 },
+                { word: 'in', prob: 0.15 },
+                { word: 'a', prob: 0.08 },
+                { word: 'long', prob: 0.05 },
+                { word: 'the', prob: 0.03 },
+                { word: 'when', prob: 0.02 },
+                { word: 'ago', prob: 0.02 }
+            ],
+            'The weather today is': [
+                { word: 'nice', prob: 0.20 },
+                { word: 'beautiful', prob: 0.18 },
+                { word: 'sunny', prob: 0.15 },
+                { word: 'great', prob: 0.12 },
+                { word: 'perfect', prob: 0.10 },
+                { word: 'cloudy', prob: 0.08 },
+                { word: 'cold', prob: 0.07 },
+                { word: 'rainy', prob: 0.05 },
+                { word: 'warm', prob: 0.05 }
+            ],
+            'I went to the': [
+                { word: 'store', prob: 0.18 },
+                { word: 'park', prob: 0.15 },
+                { word: 'doctor', prob: 0.12 },
+                { word: 'beach', prob: 0.10 },
+                { word: 'gym', prob: 0.10 },
+                { word: 'school', prob: 0.10 },
+                { word: 'movies', prob: 0.08 },
+                { word: 'hospital', prob: 0.07 },
+                { word: 'mall', prob: 0.05 },
+                { word: 'bank', prob: 0.05 }
+            ]
+        };
+
+        function showPrediction() {
+            const input = document.getElementById('predictionInput').value;
+            const display = document.getElementById('predictionDisplay');
+            
+            // Find matching or generate predictions
+            let predictions = predictionData[input];
+            
+            if (!predictions) {
+                // Generate random predictions
+                const commonWords = ['the', 'a', 'to', 'and', 'is', 'it', 'that', 'was', 'for', 'with', 'be', 'not', 'very', 'much', 'so'];
+                predictions = [];
+                let remaining = 1.0;
+                
+                for (let i = 0; i < 8; i++) {
+                    const prob = remaining * (0.3 + Math.random() * 0.3);
+                    predictions.push({
+                        word: commonWords[Math.floor(Math.random() * commonWords.length)],
+                        prob: prob
+                    });
+                    remaining -= prob;
+                }
+                predictions.sort((a, b) => b.prob - a.prob);
+            }
+            
+            display.innerHTML = `
+                <p style="color: #888; margin-bottom: 15px;">Probability distribution for next token:</p>
+                <div class="prob-container">
+                    ${predictions.map((p, i) => `
+                        <div class="prob-bar-container">
+                            <div class="prob-word">${p.word}</div>
+                            <div class="prob-bar-wrapper">
+                                <div class="prob-bar" style="width: ${p.prob * 100}%; background: ${tokenColors[i % tokenColors.length]};">
+                                    ${(p.prob * 100).toFixed(1)}%
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function updateSoftmax() {
+            const logits = [
+                parseFloat(document.getElementById('logit1').value),
+                parseFloat(document.getElementById('logit2').value),
+                parseFloat(document.getElementById('logit3').value),
+                parseFloat(document.getElementById('logit4').value)
+            ];
+            
+            document.getElementById('logit1Val').textContent = logits[0].toFixed(1);
+            document.getElementById('logit2Val').textContent = logits[1].toFixed(1);
+            document.getElementById('logit3Val').textContent = logits[2].toFixed(1);
+            document.getElementById('logit4Val').textContent = logits[3].toFixed(1);
+            
+            // Calculate softmax
+            const maxLogit = Math.max(...logits);
+            const expScores = logits.map(l => Math.exp(l - maxLogit));
+            const sumExp = expScores.reduce((a, b) => a + b, 0);
+            const probs = expScores.map(e => e / sumExp);
+            
+            const words = ['Paris', 'London', 'Berlin', 'Rome'];
+            
+            document.getElementById('softmaxOutput').innerHTML = probs.map((p, i) => `
+                <div class="prob-bar-container">
+                    <div class="prob-word">${words[i]}</div>
+                    <div class="prob-bar-wrapper">
+                        <div class="prob-bar" style="width: ${p * 100}%; background: ${tokenColors[i]};">
+                            ${(p * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== GENERATION ====================
+        let generationInterval = null;
+        const generationWords = [
+            'could', 'talk', ',', 'there', 'lived', 'a', 'young', 'inventor', 'named', 'Maya', '.',
+            'She', 'had', 'always', 'dreamed', 'of', 'creating', 'something', 'that', 'would', 'change',
+            'the', 'world', '.', 'One', 'day', ',', 'she', 'discovered', 'an', 'old', 'blueprint',
+            'in', 'her', 'grandmother', "'s", 'attic', '.'
+        ];
+        let generationIndex = 0;
+
+        function startGeneration() {
+            const prompt = document.getElementById('generationPrompt').value;
+            const display = document.getElementById('generatedText');
+            const cursor = document.getElementById('generationCursor');
+            const stats = document.getElementById('generationStats');
+            
+            display.textContent = prompt + ' ';
+            cursor.style.display = 'inline-block';
+            generationIndex = 0;
+            
+            if (generationInterval) clearInterval(generationInterval);
+            
+            generationInterval = setInterval(() => {
+                if (generationIndex >= generationWords.length) {
+                    stopGeneration();
+                    return;
+                }
+                
+                const token = generationWords[generationIndex];
+                const span = document.createElement('span');
+                span.className = 'generated-token';
+                span.textContent = token + (token.match(/[.,!?;:]/) ? '' : ' ');
+                display.appendChild(span);
+                
+                generationIndex++;
+                stats.innerHTML = `Generated: <strong>${generationIndex}</strong> tokens`;
+            }, 200);
+        }
+
+        function stopGeneration() {
+            if (generationInterval) {
+                clearInterval(generationInterval);
+                generationInterval = null;
+            }
+            document.getElementById('generationCursor').style.display = 'none';
+        }
+
+        function clearGeneration() {
+            stopGeneration();
+            document.getElementById('generatedText').textContent = '';
+            document.getElementById('generationStats').innerHTML = '';
+            generationIndex = 0;
+        }
+
+        // ==================== TEMPERATURE ====================
+        function updateTemperature() {
+            const temp = parseFloat(document.getElementById('tempSlider').value);
+            document.getElementById('tempValue').textContent = temp.toFixed(1);
+            
+            // Base probabilities
+            const baseProbs = [0.4, 0.25, 0.15, 0.1, 0.05, 0.03, 0.02];
+            const words = ['practice', 'by', 'through', 'to', 'with', 'reading', 'coding'];
+            
+            // Apply temperature
+            const logits = baseProbs.map(p => Math.log(p));
+            const scaledLogits = logits.map(l => l / temp);
+            const maxLogit = Math.max(...scaledLogits);
+            const expScores = scaledLogits.map(l => Math.exp(l - maxLogit));
+            const sumExp = expScores.reduce((a, b) => a + b, 0);
+            const probs = expScores.map(e => e / sumExp);
+            
+            document.getElementById('temperatureProbs').innerHTML = probs.map((p, i) => `
+                <div class="prob-bar-container">
+                    <div class="prob-word">${words[i]}</div>
+                    <div class="prob-bar-wrapper">
+                        <div class="prob-bar" style="width: ${p * 100}%; background: ${tokenColors[i]};">
+                            ${(p * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Explanation
+            let explanation = '';
+            if (temp < 0.5) {
+                explanation = `<h4>🥶 Very Low Temperature (${temp.toFixed(1)})</h4>
+                    <p>The model is very confident. It will almost always pick "practice" because it has the highest probability. Output will be predictable and consistent.</p>`;
+            } else if (temp < 1.0) {
+                explanation = `<h4>😊 Low-Medium Temperature (${temp.toFixed(1)})</h4>
+                    <p>The model is still fairly focused but allows some variety. "practice" is most likely, but other options have a reasonable chance.</p>`;
+            } else if (temp < 1.5) {
+                explanation = `<h4>🎨 Medium-High Temperature (${temp.toFixed(1)})</h4>
+                    <p>The probability distribution is more spread out. The model might surprise you with less common word choices.</p>`;
+            } else {
+                explanation = `<h4>🔥 High Temperature (${temp.toFixed(1)})</h4>
+                    <p>Very flat distribution - almost any word could be chosen! Outputs will be creative but may become incoherent.</p>`;
+            }
+            
+            document.getElementById('temperatureExplanation').innerHTML = explanation;
+        }
+
+        // ==================== CONTEXT WINDOW ====================
+        let contextTokens = [];
+        const sampleText = "The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet. It has been used as a typing test for over a century. Many variations exist, but this is the most common version.".split(' ');
+        let contextIndex = 0;
+
+        function resetContext() {
+            contextTokens = sampleText.slice(0, 10);
+            contextIndex = 10;
+            updateContextWindow();
+        }
+
+        function updateContextWindow() {
+            const windowSize = parseInt(document.getElementById('contextSize').value);
+            document.getElementById('contextSizeLabel').textContent = windowSize;
+            
+            const container = document.getElementById('contextTokens');
+            
+            container.innerHTML = contextTokens.map((token, i) => {
+                const inContext = i >= contextTokens.length - windowSize;
+                return `<span class="context-token ${inContext ? 'in-context' : 'out-of-context'}">${token}</span>`;
+            }).join('');
+            
+            const outOfContext = Math.max(0, contextTokens.length - windowSize);
+            document.getElementById('contextExplanation').innerHTML = outOfContext > 0 
+                ? `⚠️ <strong>${outOfContext}</strong> tokens are outside the context window and "forgotten"!`
+                : `✅ All ${contextTokens.length} tokens fit within the context window.`;
+        }
+
+        function addToContext() {
+            if (contextIndex < sampleText.length) {
+                const tokensToAdd = sampleText.slice(contextIndex, contextIndex + 5);
+                contextTokens.push(...tokensToAdd);
+                contextIndex += 5;
+                updateContextWindow();
+            }
+        }
+
+        // ==================== TRAINING ====================
+        let trainingSteps = 0;
+        let trainingProbs = { 'mat': 0.15, 'floor': 0.2, 'chair': 0.2, 'table': 0.15, 'bed': 0.1, 'rug': 0.1, 'sofa': 0.1 };
+
+        function resetTraining() {
+            trainingSteps = 0;
+            trainingProbs = { 'mat': 0.15, 'floor': 0.2, 'chair': 0.2, 'table': 0.15, 'bed': 0.1, 'rug': 0.1, 'sofa': 0.1 };
+            updateTrainingDisplay();
+        }
+
+        function trainStep() {
+            trainingSteps++;
+            
+            // Gradually increase probability of correct answer
+            const correct = 'mat';
+            const boost = 0.05 * Math.exp(-trainingSteps * 0.1);
+            
+            Object.keys(trainingProbs).forEach(word => {
+                if (word === correct) {
+                    trainingProbs[word] = Math.min(0.95, trainingProbs[word] + boost);
+                } else {
+                    trainingProbs[word] = Math.max(0.01, trainingProbs[word] - boost / 6);
+                }
+            });
+            
+            // Normalize
+            const sum = Object.values(trainingProbs).reduce((a, b) => a + b, 0);
+            Object.keys(trainingProbs).forEach(word => {
+                trainingProbs[word] /= sum;
+            });
+            
+            updateTrainingDisplay();
+        }
+
+        function updateTrainingDisplay() {
+            document.getElementById('stepCount').textContent = trainingSteps;
+            document.getElementById('trainingBar').style.width = `${Math.min(100, trainingSteps * 5)}%`;
+            
+            const sorted = Object.entries(trainingProbs).sort((a, b) => b[1] - a[1]);
+            
+            document.getElementById('trainingPredictions').innerHTML = `
+                <div class="prob-container">
+                    ${sorted.map(([word, prob], i) => `
+                        <div class="prob-bar-container">
+                            <div class="prob-word" style="${word === 'mat' ? 'color: #38ef7d;' : ''}">${word}</div>
+                            <div class="prob-bar-wrapper">
+                                <div class="prob-bar" style="width: ${prob * 100}%; background: ${word === 'mat' ? 'linear-gradient(135deg, #38ef7d, #11998e)' : tokenColors[i]};">
+                                    ${(prob * 100).toFixed(1)}%
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // ==================== LIMITATIONS ====================
+        const factData = {
+            1: { correct: false, explanation: "This is a common myth! The Great Wall is only about 15-30 feet wide and is NOT visible from space with the naked eye." },
+            2: { correct: true, explanation: "Correct! Guido van Rossum created Python and released version 0.9.0 in February 1991." },
+            3: { correct: true, explanation: "Actually true! A group of flamingos is called a 'flamboyance', but 'magnificence' is also an accepted term." },
+            4: { correct: false, explanation: "This is a myth! Einstein excelled at mathematics from a young age. This misconception arose from a reversed grading scale." }
+        };
+
+        function revealFact(num) {
+            const el = document.getElementById(`fact${num}`);
+            const data = factData[num];
+            
+            el.classList.remove('correct', 'incorrect');
+            el.classList.add(data.correct ? 'correct' : 'incorrect');
+            el.querySelector('span:first-child').textContent = data.correct ? '✅' : '❌';
+            
+            if (!el.querySelector('.fact-explanation')) {
+                const exp = document.createElement('div');
+                exp.className = 'fact-explanation';
+                exp.style.cssText = 'margin-top: 10px; font-size: 0.9rem; color: #888;';
+                exp.textContent = data.explanation;
+                el.appendChild(exp);
+            }
+        }
+
+        function revealAllFacts() {
+            [1, 2, 3, 4].forEach(revealFact);
+        }
+
+        // ==================== PLAYGROUND ====================
+        document.getElementById('playgroundTemp').addEventListener('input', function() {
+            document.getElementById('playgroundTempVal').textContent = this.value;
+        });
+
+        document.getElementById('playgroundMaxTokens').addEventListener('input', function() {
+            document.getElementById('playgroundMaxVal').textContent = this.value;
+        });
+
+        const playgroundResponses = [
+            "Why do programmers prefer dark mode? Because light attracts bugs!",
+            "A SQL query walks into a bar, walks up to two tables and asks... 'Can I join you?'",
+            "There are only 10 types of people in the world: those who understand binary and those who don't.",
+            "Why do Java developers wear glasses? Because they can't C#!",
+            "A programmer's wife tells him: 'Go to the store and buy a loaf of bread. If they have eggs, buy a dozen.' He comes home with 12 loaves of bread.",
+            "Why do programmers hate nature? It has too many bugs and no documentation.",
+            "How many programmers does it take to change a light bulb? None. It's a hardware problem!"
+        ];
+
+        async function runPlayground() {
+            const system = document.getElementById('systemPrompt').value;
+            const user = document.getElementById('userMessage').value;
+            const temp = document.getElementById('playgroundTemp').value;
+            const maxTokens = document.getElementById('playgroundMaxTokens').value;
+            
+            const output = document.getElementById('playgroundOutput');
+            const process = document.getElementById('playgroundProcess');
+            
+            // Show processing steps
+            const steps = [
+                '1️⃣ Tokenizing input...',
+                '2️⃣ Computing embeddings...',
+                '3️⃣ Running through transformer layers...',
+                '4️⃣ Applying attention mechanisms...',
+                '5️⃣ Computing output probabilities...',
+                '6️⃣ Sampling with temperature ' + temp + '...',
+                '✅ Generation complete!'
+            ];
+            
+            output.innerHTML = '<p style="color: #888;">Processing...</p>';
+            
+            for (let i = 0; i < steps.length; i++) {
+                process.innerHTML = `<div class="info-box"><p>${steps[i]}</p></div>`;
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            // Show "response"
+            const response = playgroundResponses[Math.floor(Math.random() * playgroundResponses.length)];
+            
+            output.innerHTML = '';
+            const chars = response.split('');
+            
+            for (let i = 0; i < chars.length && i < maxTokens * 4; i++) {
+                output.innerHTML += chars[i];
+                await new Promise(resolve => setTimeout(resolve, 20));
+            }
+            
+            process.innerHTML = `
+                <div class="info-box">
+                    <h4>Generation Stats</h4>
+                    <p>Tokens generated: ~${Math.ceil(response.split(' ').length)}</p>
+                    <p>Temperature: ${temp}</p>
+                    <p>System prompt: "${system.substring(0, 30)}..."</p>
+                </div>
+            `;
+        }
+
+        // Initialize
+        window.onload = function() {
+            tokenize();
+            updateSoftmax();
+            updateTemperature();
+            resetContext();
+            resetTraining();
+        };
+
+        window.onresize = function() {
+            if (document.getElementById('embeddings').classList.contains('active')) {
+                drawEmbeddingSpace();
+            }
+        };
+    </script>
+</body>
+</html>
