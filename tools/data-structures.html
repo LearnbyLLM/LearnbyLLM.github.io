@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Structures Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 1.1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .ds-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .ds-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #00d4ff;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            margin: 20px 0 10px;
+            color: #7b2cbf;
+        }
+
+        .description {
+            color: #b0b0b0;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .visualization {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .controls input {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1rem;
+            width: 120px;
+        }
+
+        .controls input::placeholder {
+            color: #666;
+        }
+
+        .controls button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Stack Styles */
+        .stack-container {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 5px;
+            min-height: 250px;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+        }
+
+        .stack-item {
+            width: 150px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            animation: stackPush 0.3s ease;
+        }
+
+        @keyframes stackPush {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .stack-base {
+            width: 180px;
+            height: 10px;
+            background: #444;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        /* Queue Styles */
+        .queue-container {
+            display: flex;
+            gap: 10px;
+            min-height: 80px;
+            align-items: center;
+            overflow-x: auto;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .queue-item {
+            min-width: 80px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            animation: queueEnqueue 0.3s ease;
+        }
+
+        @keyframes queueEnqueue {
+            from { transform: translateX(50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .queue-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 20px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* Linked List Styles */
+        .linkedlist-container {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            overflow-x: auto;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .ll-node {
+            display: flex;
+            align-items: center;
+            animation: nodeAppear 0.3s ease;
+        }
+
+        @keyframes nodeAppear {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .ll-node-content {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .ll-arrow {
+            width: 30px;
+            height: 3px;
+            background: #00d4ff;
+            position: relative;
+        }
+
+        .ll-arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -5px;
+            border: 6px solid transparent;
+            border-left: 10px solid #00d4ff;
+        }
+
+        .ll-null {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            color: #888;
+            font-style: italic;
+        }
+
+        /* Tree Styles */
+        .tree-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .tree-level {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .tree-node {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #fa709a, #fee140);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            animation: nodeAppear 0.3s ease;
+        }
+
+        .tree-node.highlight {
+            box-shadow: 0 0 20px #00d4ff;
+        }
+
+        /* Heap Styles */
+        .heap-array {
+            display: flex;
+            gap: 5px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .heap-array-item {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .heap-array-item.filled {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+
+        /* Hash Table Styles */
+        .hashtable-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px;
+        }
+
+        .hash-bucket {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .hash-index {
+            width: 60px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #888;
+        }
+
+        .hash-item {
+            width: 60px;
+            padding: 10px;
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #333;
+            animation: nodeAppear 0.3s ease;
+        }
+
+        /* Graph Styles */
+        .graph-canvas {
+            width: 100%;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        /* Array Styles */
+        .array-container {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .array-item {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: nodeAppear 0.3s ease;
+        }
+
+        .array-item .value {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .array-item .index {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Complexity Table */
+        .complexity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .complexity-table th,
+        .complexity-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .complexity-table th {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        .complexity-table td {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .complexity-good { color: #38ef7d; }
+        .complexity-medium { color: #fee140; }
+        .complexity-bad { color: #ff6b6b; }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 15px 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+        }
+
+        .info-box h4 {
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+
+        /* Log */
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #00d4ff;
+        }
+
+        /* Deque Styles */
+        .deque-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .deque-item {
+            min-width: 60px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            animation: queueEnqueue 0.3s ease;
+        }
+
+        /* Priority Queue */
+        .pq-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .pq-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            border-radius: 10px;
+            animation: stackPush 0.3s ease;
+        }
+
+        .pq-item .priority {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        /* Trie Styles */
+        .trie-display {
+            font-family: monospace;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #00d4ff;
+        }
+
+        .trie-word {
+            display: inline-block;
+            padding: 5px 15px;
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 5px;
+            margin: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .nav-tabs {
+                padding: 10px;
+            }
+
+            .nav-tab {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .controls input,
+            .controls button {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>📊 Data Structures Visualizer</h1>
+        <p>Interactive visual explanations of fundamental data structures</p>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="showSection('array')">Array</button>
+        <button class="nav-tab" onclick="showSection('stack')">Stack</button>
+        <button class="nav-tab" onclick="showSection('queue')">Queue</button>
+        <button class="nav-tab" onclick="showSection('deque')">Deque</button>
+        <button class="nav-tab" onclick="showSection('linkedlist')">Linked List</button>
+        <button class="nav-tab" onclick="showSection('hashtable')">Hash Table</button>
+        <button class="nav-tab" onclick="showSection('tree')">Binary Tree</button>
+        <button class="nav-tab" onclick="showSection('bst')">BST</button>
+        <button class="nav-tab" onclick="showSection('heap')">Heap</button>
+        <button class="nav-tab" onclick="showSection('priorityqueue')">Priority Queue</button>
+        <button class="nav-tab" onclick="showSection('graph')">Graph</button>
+        <button class="nav-tab" onclick="showSection('trie')">Trie</button>
+    </nav>
+
+    <div class="container">
+        <!-- Array Section -->
+        <section id="array" class="ds-section active">
+            <div class="card">
+                <h2>📦 Array</h2>
+                <p class="description">
+                    An array is a collection of elements stored at contiguous memory locations. 
+                    Elements can be accessed directly using their index in O(1) time. Arrays have 
+                    a fixed size (in most languages) and are excellent for random access operations.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Fixed size • Contiguous memory • O(1) random access • O(n) insertion/deletion</p>
+                </div>
+
+                <div class="controls">
+                    <input type="number" id="arrayInput" placeholder="Value">
+                    <input type="number" id="arrayIndex" placeholder="Index">
+                    <button class="btn-primary" onclick="arrayInsert()">Insert</button>
+                    <button class="btn-danger" onclick="arrayDelete()">Delete</button>
+                    <button class="btn-secondary" onclick="arrayAccess()">Access</button>
+                    <button class="btn-secondary" onclick="arrayClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div class="array-container" id="arrayContainer"></div>
+                </div>
+
+                <div class="log" id="arrayLog"></div>
+
+                <h3>Time Complexity</h3>
+                <table class="complexity-table">
+                    <tr>
+                        <th>Operation</th>
+                        <th>Average</th>
+                        <th>Worst</th>
+                    </tr>
+                    <tr>
+                        <td>Access</td>
+                        <td class="complexity-good">O(1)</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td class="complexity-medium">O(n)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Insertion</td>
+                        <td class="complexity-medium">O(n)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Deletion</td>
+                        <td class="complexity-medium">O(n)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- Stack Section -->
+        <section id="stack" class="ds-section">
+            <div class="card">
+                <h2>📚 Stack</h2>
+                <p class="description">
+                    A stack is a linear data structure that follows the Last In First Out (LIFO) principle.
+                    Think of it like a stack of plates - you can only add or remove plates from the top.
+                    Common operations are push (add to top) and pop (remove from top).
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• LIFO (Last In First Out) • O(1) push/pop • Used in: function calls, undo operations, expression evaluation</p>
+                </div>
+
+                <div class="controls">
+                    <input type="number" id="stackInput" placeholder="Value">
+                    <button class="btn-primary" onclick="stackPush()">Push</button>
+                    <button class="btn-danger" onclick="stackPop()">Pop</button>
+                    <button class="btn-secondary" onclick="stackPeek()">Peek</button>
+                    <button class="btn-secondary" onclick="stackClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div style="text-align: center; color: #888; margin-bottom: 10px;">← TOP</div>
+                    <div class="stack-container" id="stackContainer"></div>
+                    <div class="stack-base"></div>
+                </div>
+
+                <div class="log" id="stackLog"></div>
+
+                <h3>Time Complexity</h3>
+                <table class="complexity-table">
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time</th>
+                    </tr>
+                    <tr>
+                        <td>Push</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Pop</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Peek</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- Queue Section -->
+        <section id="queue" class="ds-section">
+            <div class="card">
+                <h2>🚶‍♂️ Queue</h2>
+                <p class="description">
+                    A queue is a linear data structure that follows the First In First Out (FIFO) principle.
+                    Like a line of people waiting - the first person to join is the first to leave.
+                    Main operations are enqueue (add to back) and dequeue (remove from front).
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• FIFO (First In First Out) • O(1) enqueue/dequeue • Used in: BFS, scheduling, buffering</p>
+                </div>
+
+                <div class="controls">
+                    <input type="number" id="queueInput" placeholder="Value">
+                    <button class="btn-primary" onclick="queueEnqueue()">Enqueue</button>
+                    <button class="btn-danger" onclick="queueDequeue()">Dequeue</button>
+                    <button class="btn-secondary" onclick="queuePeek()">Peek Front</button>
+                    <button class="btn-secondary" onclick="queueClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div class="queue-labels">
+                        <span>FRONT (Dequeue) →</span>
+                        <span>← REAR (Enqueue)</span>
+                    </div>
+                    <div class="queue-container" id="queueContainer"></div>
+                </div>
+
+                <div class="log" id="queueLog"></div>
+
+                <h3>Time Complexity</h3>
+                <table class="complexity-table">
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time</th>
+                    </tr>
+                    <tr>
+                        <td>Enqueue</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Dequeue</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Peek</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- Deque Section -->
+        <section id="deque" class="ds-section">
+            <div class="card">
+                <h2>↔️ Deque (Double-Ended Queue)</h2>
+                <p class="description">
+                    A deque (pronounced "deck") is a generalized queue that allows insertion and deletion 
+                    at both ends. It combines the features of both stack and queue, providing flexibility
+                    in how elements are added and removed.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Insert/delete from both ends • O(1) operations • Can act as both stack and queue</p>
+                </div>
+
+                <div class="controls">
+                    <input type="number" id="dequeInput" placeholder="Value">
+                    <button class="btn-primary" onclick="dequePushFront()">Push Front</button>
+                    <button class="btn-primary" onclick="dequePushBack()">Push Back</button>
+                    <button class="btn-danger" onclick="dequePopFront()">Pop Front</button>
+                    <button class="btn-danger" onclick="dequePopBack()">Pop Back</button>
+                    <button class="btn-secondary" onclick="dequeClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div class="queue-labels">
+                        <span>← FRONT</span>
+                        <span>BACK →</span>
+                    </div>
+                    <div class="deque-container" id="dequeContainer"></div>
+                </div>
+
+                <div class="log" id="dequeLog"></div>
+            </div>
+        </section>
+
+        <!-- Linked List Section -->
+        <section id="linkedlist" class="ds-section">
+            <div class="card">
+                <h2>🔗 Linked List</h2>
+                <p class="description">
+                    A linked list is a linear data structure where elements are stored in nodes.
+                    Each node contains data and a reference (pointer) to the next node. Unlike arrays,
+                    linked lists don't require contiguous memory and can grow dynamically.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Dynamic size • Non-contiguous memory • O(1) insertion/deletion at known position • O(n) access</p>
+                </div>
+
+                <div class="controls">
+                    <input type="number" id="llInput" placeholder="Value">
+                    <button class="btn-primary" onclick="llInsertHead()">Insert Head</button>
+                    <button class="btn-primary" onclick="llInsertTail()">Insert Tail</button>
+                    <button class="btn-danger" onclick="llDeleteHead()">Delete Head</button>
+                    <button class="btn-danger" onclick="llDeleteTail()">Delete Tail</button>
+                    <button class="btn-secondary" onclick="llClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div style="color: #888; margin-bottom: 10px;">HEAD →</div>
+                    <div class="linkedlist-container" id="llContainer"></div>
+                </div>
+
+                <div class="log" id="llLog"></div>
+
+                <h3>Time Complexity</h3>
+                <table class="complexity-table">
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time</th>
+                    </tr>
+                    <tr>
+                        <td>Access</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Insert at Head</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Insert at Tail</td>
+                        <td class="complexity-medium">O(n)*</td>
+                    </tr>
+                    <tr>
+                        <td>Delete at Head</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                </table>
+                <p style="color: #888; font-size: 0.9rem; margin-top: 10px;">*O(1) if tail pointer is maintained</p>
+            </div>
+        </section>
+
+        <!-- Hash Table Section -->
+        <section id="hashtable" class="ds-section">
+            <div class="card">
+                <h2>#️⃣ Hash Table</h2>
+                <p class="description">
+                    A hash table is a data structure that maps keys to values using a hash function.
+                    It provides near-constant time complexity for insertions, deletions, and lookups.
+                    Collisions are handled through various techniques like chaining or open addressing.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Key-value pairs • O(1) average operations • Uses hash function • Handles collisions</p>
+                </div>
+
+                <div class="controls">
+                    <input type="text" id="hashKey" placeholder="Key">
+                    <input type="text" id="hashValue" placeholder="Value">
+                    <button class="btn-primary" onclick="hashInsert()">Insert</button>
+                    <button class="btn-danger" onclick="hashDelete()">Delete</button>
+                    <button class="btn-secondary" onclick="hashSearch()">Search</button>
+                    <button class="btn-secondary" onclick="hashClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <p style="color: #888; margin-bottom: 15px;">Hash Function: key.charCodeAt(0) % 10</p>
+                    <div class="hashtable-container" id="hashContainer"></div>
+                </div>
+
+                <div class="log" id="hashLog"></div>
+
+                <h3>Time Complexity</h3>
+                <table class="complexity-table">
+                    <tr>
+                        <th>Operation</th>
+                        <th>Average</th>
+                        <th>Worst</th>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td class="complexity-good">O(1)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Insert</td>
+                        <td class="complexity-good">O(1)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Delete</td>
+                        <td class="complexity-good">O(1)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- Binary Tree Section -->
+        <section id="tree" class="ds-section">
+            <div class="card">
+                <h2>🌳 Binary Tree</h2>
+                <p class="description">
+                    A binary tree is a hierarchical data structure where each node has at most two children,
+                    referred to as left child and right child. The topmost node is called the root.
+                    Trees are used for hierarchical data, searching, sorting, and more.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Hierarchical structure • Each node has max 2 children • Used in: file systems, DOM, expression parsing</p>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-primary" onclick="treeGenerate()">Generate Random Tree</button>
+                    <button class="btn-secondary" onclick="treeTraverse('inorder')">In-order</button>
+                    <button class="btn-secondary" onclick="treeTraverse('preorder')">Pre-order</button>
+                    <button class="btn-secondary" onclick="treeTraverse('postorder')">Post-order</button>
+                    <button class="btn-secondary" onclick="treeClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div class="tree-container" id="treeContainer"></div>
+                </div>
+
+                <div class="log" id="treeLog"></div>
+
+                <h3>Tree Traversals</h3>
+                <div class="info-box">
+                    <p><strong>In-order:</strong> Left → Root → Right</p>
+                    <p><strong>Pre-order:</strong> Root → Left → Right</p>
+                    <p><strong>Post-order:</strong> Left → Right → Root</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- BST Section -->
+        <section id="bst" class="ds-section">
+            <div class="card">
+                <h2>🔍 Binary Search Tree (BST)</h2>
+                <p class="description">
+                    A Binary Search Tree is a binary tree with the property that for each node:
+                    all values in the left subtree are smaller, and all values in the right subtree are larger.
+                    This property enables efficient searching, insertion, and deletion.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Left child < parent < right child • O(log n) average operations • In-order traversal gives sorted order</p>
+                </div>
+
+                <div class="controls">
+                    <input type="number" id="bstInput" placeholder="Value">
+                    <button class="btn-primary" onclick="bstInsert()">Insert</button>
+                    <button class="btn-secondary" onclick="bstSearch()">Search</button>
+                    <button class="btn-danger" onclick="bstDelete()">Delete</button>
+                    <button class="btn-secondary" onclick="bstClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div class="tree-container" id="bstContainer"></div>
+                </div>
+
+                <div class="log" id="bstLog"></div>
+
+                <h3>Time Complexity</h3>
+                <table class="complexity-table">
+                    <tr>
+                        <th>Operation</th>
+                        <th>Average</th>
+                        <th>Worst (Unbalanced)</th>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td class="complexity-good">O(log n)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Insert</td>
+                        <td class="complexity-good">O(log n)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Delete</td>
+                        <td class="complexity-good">O(log n)</td>
+                        <td class="complexity-medium">O(n)</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- Heap Section -->
+        <section id="heap" class="ds-section">
+            <div class="card">
+                <h2>⛰️ Heap</h2>
+                <p class="description">
+                    A heap is a complete binary tree that satisfies the heap property. In a max-heap,
+                    each parent is greater than or equal to its children. In a min-heap, each parent
+                    is smaller than or equal to its children. Heaps are commonly implemented using arrays.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Complete binary tree • Heap property maintained • O(log n) insert/delete • O(1) find min/max</p>
+                </div>
+
+                <div class="controls">
+                    <input type="number" id="heapInput" placeholder="Value">
+                    <select id="heapType" style="padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.1); color: #fff; border: none;">
+                        <option value="max">Max Heap</option>
+                        <option value="min">Min Heap</option>
+                    </select>
+                    <button class="btn-primary" onclick="heapInsert()">Insert</button>
+                    <button class="btn-danger" onclick="heapExtract()">Extract Root</button>
+                    <button class="btn-secondary" onclick="heapClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div class="tree-container" id="heapTreeContainer"></div>
+                    <div style="margin-top: 20px; color: #888;">Array Representation:</div>
+                    <div class="heap-array" id="heapArrayContainer"></div>
+                </div>
+
+                <div class="log" id="heapLog"></div>
+
+                <h3>Array Index Relationships</h3>
+                <div class="info-box">
+                    <p><strong>Parent:</strong> (i - 1) / 2</p>
+                    <p><strong>Left Child:</strong> 2i + 1</p>
+                    <p><strong>Right Child:</strong> 2i + 2</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Priority Queue Section -->
+        <section id="priorityqueue" class="ds-section">
+            <div class="card">
+                <h2>🎯 Priority Queue</h2>
+                <p class="description">
+                    A priority queue is an abstract data type where each element has a priority.
+                    Elements are dequeued based on their priority rather than their order of insertion.
+                    It's typically implemented using a heap for efficient operations.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Elements have priorities • Highest priority dequeued first • Usually implemented with heap</p>
+                </div>
+
+                <div class="controls">
+                    <input type="text" id="pqValue" placeholder="Value">
+                    <input type="number" id="pqPriority" placeholder="Priority">
+                    <button class="btn-primary" onclick="pqInsert()">Enqueue</button>
+                    <button class="btn-danger" onclick="pqDequeue()">Dequeue</button>
+                    <button class="btn-secondary" onclick="pqClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <p style="color: #888; margin-bottom: 15px;">Higher priority = Dequeued first</p>
+                    <div class="pq-container" id="pqContainer"></div>
+                </div>
+
+                <div class="log" id="pqLog"></div>
+            </div>
+        </section>
+
+        <!-- Graph Section -->
+        <section id="graph" class="ds-section">
+            <div class="card">
+                <h2>🕸️ Graph</h2>
+                <p class="description">
+                    A graph is a non-linear data structure consisting of vertices (nodes) and edges
+                    that connect these vertices. Graphs can be directed or undirected, weighted or unweighted.
+                    They're used to represent networks, relationships, maps, and more.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Vertices and edges • Directed/Undirected • Weighted/Unweighted • Used in: social networks, maps, web crawling</p>
+                </div>
+
+                <div class="controls">
+                    <input type="text" id="graphNode" placeholder="Node">
+                    <button class="btn-primary" onclick="graphAddNode()">Add Node</button>
+                    <input type="text" id="graphFrom" placeholder="From">
+                    <input type="text" id="graphTo" placeholder="To">
+                    <button class="btn-primary" onclick="graphAddEdge()">Add Edge</button>
+                    <button class="btn-secondary" onclick="graphBFS()">BFS</button>
+                    <button class="btn-secondary" onclick="graphDFS()">DFS</button>
+                    <button class="btn-secondary" onclick="graphClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <canvas id="graphCanvas" class="graph-canvas"></canvas>
+                </div>
+
+                <div class="log" id="graphLog"></div>
+
+                <h3>Representations</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div class="info-box">
+                        <h4>Adjacency Matrix</h4>
+                        <p>2D array where matrix[i][j] = 1 if edge exists</p>
+                        <p>Space: O(V²)</p>
+                    </div>
+                    <div class="info-box">
+                        <h4>Adjacency List</h4>
+                        <p>Array of lists containing neighbors</p>
+                        <p>Space: O(V + E)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trie Section -->
+        <section id="trie" class="ds-section">
+            <div class="card">
+                <h2>🔤 Trie (Prefix Tree)</h2>
+                <p class="description">
+                    A trie is a tree-like data structure used to store strings where each node represents
+                    a character. It's excellent for prefix-based searches and autocomplete functionality.
+                    Common applications include dictionaries, spell checkers, and IP routing.
+                </p>
+
+                <div class="info-box">
+                    <h4>Key Characteristics</h4>
+                    <p>• Each node represents a character • O(m) search where m = word length • Perfect for prefix searches</p>
+                </div>
+
+                <div class="controls">
+                    <input type="text" id="trieInput" placeholder="Word">
+                    <button class="btn-primary" onclick="trieInsert()">Insert</button>
+                    <button class="btn-secondary" onclick="trieSearch()">Search</button>
+                    <button class="btn-secondary" onclick="triePrefix()">Find Prefix</button>
+                    <button class="btn-secondary" onclick="trieClear()">Clear</button>
+                </div>
+
+                <div class="visualization">
+                    <div style="color: #888; margin-bottom: 15px;">Words in Trie:</div>
+                    <div class="trie-display" id="trieContainer"></div>
+                </div>
+
+                <div class="log" id="trieLog"></div>
+
+                <h3>Time Complexity</h3>
+                <table class="complexity-table">
+                    <tr>
+                        <th>Operation</th>
+                        <th>Time</th>
+                    </tr>
+                    <tr>
+                        <td>Insert</td>
+                        <td class="complexity-good">O(m)</td>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td class="complexity-good">O(m)</td>
+                    </tr>
+                    <tr>
+                        <td>Delete</td>
+                        <td class="complexity-good">O(m)</td>
+                    </tr>
+                </table>
+                <p style="color: #888; font-size: 0.9rem; margin-top: 10px;">m = length of the word</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.ds-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Utility Functions
+        function log(logId, message) {
+            const logEl = document.getElementById(logId);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `> ${message}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+            if (logEl.children.length > 10) logEl.removeChild(logEl.lastChild);
+        }
+
+        // ==================== ARRAY ====================
+        let arrayData = [10, 20, 30, 40, 50];
+
+        function renderArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = arrayData.map((val, idx) => 
+                `<div class="array-item">
+                    <span class="value">${val}</span>
+                    <span class="index">[${idx}]</span>
+                </div>`
+            ).join('');
+        }
+
+        function arrayInsert() {
+            const value = document.getElementById('arrayInput').value;
+            const index = document.getElementById('arrayIndex').value;
+            if (value === '') return;
+            const idx = index === '' ? arrayData.length : parseInt(index);
+            if (idx < 0 || idx > arrayData.length) {
+                log('arrayLog', `Invalid index: ${idx}`);
+                return;
+            }
+            arrayData.splice(idx, 0, parseInt(value));
+            log('arrayLog', `Inserted ${value} at index ${idx}`);
+            renderArray();
+        }
+
+        function arrayDelete() {
+            const index = document.getElementById('arrayIndex').value;
+            if (index === '' || arrayData.length === 0) return;
+            const idx = parseInt(index);
+            if (idx < 0 || idx >= arrayData.length) {
+                log('arrayLog', `Invalid index: ${idx}`);
+                return;
+            }
+            const removed = arrayData.splice(idx, 1)[0];
+            log('arrayLog', `Deleted ${removed} from index ${idx}`);
+            renderArray();
+        }
+
+        function arrayAccess() {
+            const index = document.getElementById('arrayIndex').value;
+            if (index === '') return;
+            const idx = parseInt(index);
+            if (idx < 0 || idx >= arrayData.length) {
+                log('arrayLog', `Index ${idx} out of bounds`);
+                return;
+            }
+            log('arrayLog', `Value at index ${idx}: ${arrayData[idx]}`);
+        }
+
+        function arrayClear() {
+            arrayData = [];
+            renderArray();
+            log('arrayLog', 'Array cleared');
+        }
+
+        // ==================== STACK ====================
+        let stackData = [];
+
+        function renderStack() {
+            const container = document.getElementById('stackContainer');
+            container.innerHTML = stackData.map((val, idx) => 
+                `<div class="stack-item">${val}</div>`
+            ).join('');
+        }
+
+        function stackPush() {
+            const value = document.getElementById('stackInput').value;
+            if (value === '') return;
+            stackData.push(parseInt(value));
+            log('stackLog', `Pushed ${value} onto stack`);
+            renderStack();
+        }
+
+        function stackPop() {
+            if (stackData.length === 0) {
+                log('stackLog', 'Stack is empty!');
+                return;
+            }
+            const popped = stackData.pop();
+            log('stackLog', `Popped ${popped} from stack`);
+            renderStack();
+        }
+
+        function stackPeek() {
+            if (stackData.length === 0) {
+                log('stackLog', 'Stack is empty!');
+                return;
+            }
+            log('stackLog', `Top element: ${stackData[stackData.length - 1]}`);
+        }
+
+        function stackClear() {
+            stackData = [];
+            renderStack();
+            log('stackLog', 'Stack cleared');
+        }
+
+        // ==================== QUEUE ====================
+        let queueData = [];
+
+        function renderQueue() {
+            const container = document.getElementById('queueContainer');
+            container.innerHTML = queueData.map(val => 
+                `<div class="queue-item">${val}</div>`
+            ).join('');
+        }
+
+        function queueEnqueue() {
+            const value = document.getElementById('queueInput').value;
+            if (value === '') return;
+            queueData.push(parseInt(value));
+            log('queueLog', `Enqueued ${value}`);
+            renderQueue();
+        }
+
+        function queueDequeue() {
+            if (queueData.length === 0) {
+                log('queueLog', 'Queue is empty!');
+                return;
+            }
+            const dequeued = queueData.shift();
+            log('queueLog', `Dequeued ${dequeued}`);
+            renderQueue();
+        }
+
+        function queuePeek() {
+            if (queueData.length === 0) {
+                log('queueLog', 'Queue is empty!');
+                return;
+            }
+            log('queueLog', `Front element: ${queueData[0]}`);
+        }
+
+        function queueClear() {
+            queueData = [];
+            renderQueue();
+            log('queueLog', 'Queue cleared');
+        }
+
+        // ==================== DEQUE ====================
+        let dequeData = [];
+
+        function renderDeque() {
+            const container = document.getElementById('dequeContainer');
+            container.innerHTML = dequeData.map(val => 
+                `<div class="deque-item">${val}</div>`
+            ).join('');
+        }
+
+        function dequePushFront() {
+            const value = document.getElementById('dequeInput').value;
+            if (value === '') return;
+            dequeData.unshift(parseInt(value));
+            log('dequeLog', `Pushed ${value} to front`);
+            renderDeque();
+        }
+
+        function dequePushBack() {
+            const value = document.getElementById('dequeInput').value;
+            if (value === '') return;
+            dequeData.push(parseInt(value));
+            log('dequeLog', `Pushed ${value} to back`);
+            renderDeque();
+        }
+
+        function dequePopFront() {
+            if (dequeData.length === 0) {
+                log('dequeLog', 'Deque is empty!');
+                return;
+            }
+            const popped = dequeData.shift();
+            log('dequeLog', `Popped ${popped} from front`);
+            renderDeque();
+        }
+
+        function dequePopBack() {
+            if (dequeData.length === 0) {
+                log('dequeLog', 'Deque is empty!');
+                return;
+            }
+            const popped = dequeData.pop();
+            log('dequeLog', `Popped ${popped} from back`);
+            renderDeque();
+        }
+
+        function dequeClear() {
+            dequeData = [];
+            renderDeque();
+            log('dequeLog', 'Deque cleared');
+        }
+
+        // ==================== LINKED LIST ====================
+        let llData = [];
+
+        function renderLL() {
+            const container = document.getElementById('llContainer');
+            if (llData.length === 0) {
+                container.innerHTML = '<span class="ll-null">NULL</span>';
+                return;
+            }
+            container.innerHTML = llData.map((val, idx) => 
+                `<div class="ll-node">
+                    <div class="ll-node-content">${val}</div>
+                    ${idx < llData.length - 1 ? '<div class="ll-arrow"></div>' : ''}
+                </div>`
+            ).join('') + '<span class="ll-null">→ NULL</span>';
+        }
+
+        function llInsertHead() {
+            const value = document.getElementById('llInput').value;
+            if (value === '') return;
+            llData.unshift(parseInt(value));
+            log('llLog', `Inserted ${value} at head`);
+            renderLL();
+        }
+
+        function llInsertTail() {
+            const value = document.getElementById('llInput').value;
+            if (value === '') return;
+            llData.push(parseInt(value));
+            log('llLog', `Inserted ${value} at tail`);
+            renderLL();
+        }
+
+        function llDeleteHead() {
+            if (llData.length === 0) {
+                log('llLog', 'List is empty!');
+                return;
+            }
+            const removed = llData.shift();
+            log('llLog', `Deleted ${removed} from head`);
+            renderLL();
+        }
+
+        function llDeleteTail() {
+            if (llData.length === 0) {
+                log('llLog', 'List is empty!');
+                return;
+            }
+            const removed = llData.pop();
+            log('llLog', `Deleted ${removed} from tail`);
+            renderLL();
+        }
+
+        function llClear() {
+            llData = [];
+            renderLL();
+            log('llLog', 'Linked list cleared');
+        }
+
+        // ==================== HASH TABLE ====================
+        let hashTable = Array(10).fill(null).map(() => []);
+
+        function hashFunction(key) {
+            return key.charCodeAt(0) % 10;
+        }
+
+        function renderHash() {
+            const container = document.getElementById('hashContainer');
+            container.innerHTML = hashTable.map((bucket, idx) => 
+                `<div class="hash-bucket">
+                    <div class="hash-index">[${idx}]</div>
+                    ${bucket.map(item => `<div class="hash-item">${item.key}: ${item.value}</div>`).join('')}
+                </div>`
+            ).join('');
+        }
+
+        function hashInsert() {
+            const key = document.getElementById('hashKey').value;
+            const value = document.getElementById('hashValue').value;
+            if (key === '' || value === '') return;
+            const index = hashFunction(key);
+            const existing = hashTable[index].findIndex(item => item.key === key);
+            if (existing !== -1) {
+                hashTable[index][existing].value = value;
+                log('hashLog', `Updated ${key} = ${value} at index ${index}`);
+            } else {
+                hashTable[index].push({ key, value });
+                log('hashLog', `Inserted ${key} = ${value} at index ${index}`);
+            }
+            renderHash();
+        }
+
+        function hashDelete() {
+            const key = document.getElementById('hashKey').value;
+            if (key === '') return;
+            const index = hashFunction(key);
+            const itemIndex = hashTable[index].findIndex(item => item.key === key);
+            if (itemIndex !== -1) {
+                hashTable[index].splice(itemIndex, 1);
+                log('hashLog', `Deleted key "${key}" from index ${index}`);
+            } else {
+                log('hashLog', `Key "${key}" not found`);
+            }
+            renderHash();
+        }
+
+        function hashSearch() {
+            const key = document.getElementById('hashKey').value;
+            if (key === '') return;
+            const index = hashFunction(key);
+            const item = hashTable[index].find(item => item.key === key);
+            if (item) {
+                log('hashLog', `Found: ${key} = ${item.value} at index ${index}`);
+            } else {
+                log('hashLog', `Key "${key}" not found`);
+            }
+        }
+
+        function hashClear() {
+            hashTable = Array(10).fill(null).map(() => []);
+            renderHash();
+            log('hashLog', 'Hash table cleared');
+        }
+
+        // ==================== BINARY TREE ====================
+        let treeData = null;
+
+        class TreeNode {
+            constructor(value) {
+                this.value = value;
+                this.left = null;
+                this.right = null;
+            }
+        }
+
+        function generateRandomTree(depth = 3) {
+            if (depth === 0 || Math.random() < 0.2) return null;
+            const node = new TreeNode(Math.floor(Math.random() * 99) + 1);
+            node.left = generateRandomTree(depth - 1);
+            node.right = generateRandomTree(depth - 1);
+            return node;
+        }
+
+        function renderTree() {
+            const container = document.getElementById('treeContainer');
+            if (!treeData) {
+                container.innerHTML = '<p style="color: #888;">No tree generated</p>';
+                return;
+            }
+            
+            const levels = [];
+            const queue = [{ node: treeData, level: 0 }];
+            
+            while (queue.length > 0) {
+                const { node, level } = queue.shift();
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(node ? node.value : null);
+                
+                if (node && level < 3) {
+                    queue.push({ node: node.left, level: level + 1 });
+                    queue.push({ node: node.right, level: level + 1 });
+                }
+            }
+            
+            container.innerHTML = levels.map(level => 
+                `<div class="tree-level">
+                    ${level.map(val => val !== null ? 
+                        `<div class="tree-node">${val}</div>` : 
+                        '<div style="width: 50px;"></div>'
+                    ).join('')}
+                </div>`
+            ).join('');
+        }
+
+        function treeGenerate() {
+            treeData = generateRandomTree(3);
+            renderTree();
+            log('treeLog', 'Generated random binary tree');
+        }
+
+        function treeTraverse(type) {
+            if (!treeData) {
+                log('treeLog', 'No tree to traverse');
+                return;
+            }
+            
+            const result = [];
+            
+            function inorder(node) {
+                if (!node) return;
+                inorder(node.left);
+                result.push(node.value);
+                inorder(node.right);
+            }
+            
+            function preorder(node) {
+                if (!node) return;
+                result.push(node.value);
+                preorder(node.left);
+                preorder(node.right);
+            }
+            
+            function postorder(node) {
+                if (!node) return;
+                postorder(node.left);
+                postorder(node.right);
+                result.push(node.value);
+            }
+            
+            if (type === 'inorder') inorder(treeData);
+            else if (type === 'preorder') preorder(treeData);
+            else postorder(treeData);
+            
+            log('treeLog', `${type}: [${result.join(', ')}]`);
+        }
+
+        function treeClear() {
+            treeData = null;
+            renderTree();
+            log('treeLog', 'Tree cleared');
+        }
+
+        // ==================== BST ====================
+        let bstRoot = null;
+
+        function bstInsertNode(root, value) {
+            if (!root) return new TreeNode(value);
+            if (value < root.value) root.left = bstInsertNode(root.left, value);
+            else root.right = bstInsertNode(root.right, value);
+            return root;
+        }
+
+        function renderBST() {
+            const container = document.getElementById('bstContainer');
+            if (!bstRoot) {
+                container.innerHTML = '<p style="color: #888;">BST is empty</p>';
+                return;
+            }
+            
+            const levels = [];
+            const queue = [{ node: bstRoot, level: 0 }];
+            
+            while (queue.length > 0) {
+                const { node, level } = queue.shift();
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(node ? node.value : null);
+                
+                if (node && level < 4) {
+                    queue.push({ node: node.left, level: level + 1 });
+                    queue.push({ node: node.right, level: level + 1 });
+                }
+            }
+            
+            container.innerHTML = levels.map(level => 
+                `<div class="tree-level">
+                    ${level.map(val => val !== null ? 
+                        `<div class="tree-node">${val}</div>` : 
+                        '<div style="width: 50px;"></div>'
+                    ).join('')}
+                </div>`
+            ).join('');
+        }
+
+        function bstInsert() {
+            const value = document.getElementById('bstInput').value;
+            if (value === '') return;
+            bstRoot = bstInsertNode(bstRoot, parseInt(value));
+            log('bstLog', `Inserted ${value}`);
+            renderBST();
+        }
+
+        function bstSearch() {
+            const value = document.getElementById('bstInput').value;
+            if (value === '') return;
+            
+            let current = bstRoot;
+            let path = [];
+            
+            while (current) {
+                path.push(current.value);
+                if (current.value === parseInt(value)) {
+                    log('bstLog', `Found ${value}! Path: ${path.join(' → ')}`);
+                    return;
+                }
+                if (parseInt(value) < current.value) current = current.left;
+                else current = current.right;
+            }
+            log('bstLog', `${value} not found. Path: ${path.join(' → ')}`);
+        }
+
+        function bstDelete() {
+            const value = document.getElementById('bstInput').value;
+            if (value === '') return;
+            
+            function deleteNode(root, val) {
+                if (!root) return null;
+                if (val < root.value) root.left = deleteNode(root.left, val);
+                else if (val > root.value) root.right = deleteNode(root.right, val);
+                else {
+                    if (!root.left) return root.right;
+                    if (!root.right) return root.left;
+                    let minNode = root.right;
+                    while (minNode.left) minNode = minNode.left;
+                    root.value = minNode.value;
+                    root.right = deleteNode(root.right, minNode.value);
+                }
+                return root;
+            }
+            
+            bstRoot = deleteNode(bstRoot, parseInt(value));
+            log('bstLog', `Deleted ${value}`);
+            renderBST();
+        }
+
+        function bstClear() {
+            bstRoot = null;
+            renderBST();
+            log('bstLog', 'BST cleared');
+        }
+
+        // ==================== HEAP ====================
+        let heapData = [];
+
+        function heapifyUp(arr, idx, isMax) {
+            while (idx > 0) {
+                const parent = Math.floor((idx - 1) / 2);
+                const shouldSwap = isMax ? arr[idx] > arr[parent] : arr[idx] < arr[parent];
+                if (shouldSwap) {
+                    [arr[idx], arr[parent]] = [arr[parent], arr[idx]];
+                    idx = parent;
+                } else break;
+            }
+        }
+
+        function heapifyDown(arr, idx, isMax) {
+            const n = arr.length;
+            while (true) {
+                let target = idx;
+                const left = 2 * idx + 1;
+                const right = 2 * idx + 2;
+                
+                if (left < n) {
+                    const leftBetter = isMax ? arr[left] > arr[target] : arr[left] < arr[target];
+                    if (leftBetter) target = left;
+                }
+                if (right < n) {
+                    const rightBetter = isMax ? arr[right] > arr[target] : arr[right] < arr[target];
+                    if (rightBetter) target = right;
+                }
+                
+                if (target !== idx) {
+                    [arr[idx], arr[target]] = [arr[target], arr[idx]];
+                    idx = target;
+                } else break;
+            }
+        }
+
+        function renderHeap() {
+            const treeContainer = document.getElementById('heapTreeContainer');
+            const arrayContainer = document.getElementById('heapArrayContainer');
+            
+            if (heapData.length === 0) {
+                treeContainer.innerHTML = '<p style="color: #888;">Heap is empty</p>';
+                arrayContainer.innerHTML = '';
+                return;
+            }
+            
+            // Render tree
+            const levels = [];
+            let idx = 0;
+            let levelSize = 1;
+            
+            while (idx < heapData.length) {
+                levels.push(heapData.slice(idx, idx + levelSize));
+                idx += levelSize;
+                levelSize *= 2;
+            }
+            
+            treeContainer.innerHTML = levels.map(level => 
+                `<div class="tree-level">
+                    ${level.map(val => `<div class="tree-node">${val}</div>`).join('')}
+                </div>`
+            ).join('');
+            
+            // Render array
+            arrayContainer.innerHTML = heapData.map((val, idx) => 
+                `<div class="heap-array-item filled">
+                    <div>${val}</div>
+                    <div style="font-size: 0.7rem; color: rgba(0,0,0,0.5)">[${idx}]</div>
+                </div>`
+            ).join('');
+        }
+
+        function heapInsert() {
+            const value = document.getElementById('heapInput').value;
+            if (value === '') return;
+            const isMax = document.getElementById('heapType').value === 'max';
+            
+            heapData.push(parseInt(value));
+            heapifyUp(heapData, heapData.length - 1, isMax);
+            
+            log('heapLog', `Inserted ${value} (${isMax ? 'Max' : 'Min'} Heap)`);
+            renderHeap();
+        }
+
+        function heapExtract() {
+            if (heapData.length === 0) {
+                log('heapLog', 'Heap is empty!');
+                return;
+            }
+            
+            const isMax = document.getElementById('heapType').value === 'max';
+            const extracted = heapData[0];
+            heapData[0] = heapData[heapData.length - 1];
+            heapData.pop();
+            
+            if (heapData.length > 0) {
+                heapifyDown(heapData, 0, isMax);
+            }
+            
+            log('heapLog', `Extracted ${extracted}`);
+            renderHeap();
+        }
+
+        function heapClear() {
+            heapData = [];
+            renderHeap();
+            log('heapLog', 'Heap cleared');
+        }
+
+        // ==================== PRIORITY QUEUE ====================
+        let pqData = [];
+
+        function renderPQ() {
+            const container = document.getElementById('pqContainer');
+            if (pqData.length === 0) {
+                container.innerHTML = '<p style="color: #888;">Priority Queue is empty</p>';
+                return;
+            }
+            
+            const sorted = [...pqData].sort((a, b) => b.priority - a.priority);
+            container.innerHTML = sorted.map(item => 
+                `<div class="pq-item">
+                    <span>${item.value}</span>
+                    <span class="priority">P: ${item.priority}</span>
+                </div>`
+            ).join('');
+        }
+
+        function pqInsert() {
+            const value = document.getElementById('pqValue').value;
+            const priority = document.getElementById('pqPriority').value;
+            if (value === '' || priority === '') return;
+            
+            pqData.push({ value, priority: parseInt(priority) });
+            log('pqLog', `Enqueued "${value}" with priority ${priority}`);
+            renderPQ();
+        }
+
+        function pqDequeue() {
+            if (pqData.length === 0) {
+                log('pqLog', 'Priority Queue is empty!');
+                return;
+            }
+            
+            let maxIdx = 0;
+            for (let i = 1; i < pqData.length; i++) {
+                if (pqData[i].priority > pqData[maxIdx].priority) maxIdx = i;
+            }
+            
+            const removed = pqData.splice(maxIdx, 1)[0];
+            log('pqLog', `Dequeued "${removed.value}" (priority: ${removed.priority})`);
+            renderPQ();
+        }
+
+        function pqClear() {
+            pqData = [];
+            renderPQ();
+            log('pqLog', 'Priority Queue cleared');
+        }
+
+        // ==================== GRAPH ====================
+        let graphNodes = new Map();
+        let graphEdges = [];
+
+        function renderGraph() {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (graphNodes.size === 0) {
+                ctx.fillStyle = '#888';
+                ctx.font = '16px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText('Add nodes and edges to visualize the graph', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            // Draw edges
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 2;
+            
+            graphEdges.forEach(([from, to]) => {
+                const fromPos = graphNodes.get(from);
+                const toPos = graphNodes.get(to);
+                if (fromPos && toPos) {
+                    ctx.beginPath();
+                    ctx.moveTo(fromPos.x, fromPos.y);
+                    ctx.lineTo(toPos.x, toPos.y);
+                    ctx.stroke();
+                }
+            });
+            
+            // Draw nodes
+            graphNodes.forEach((pos, label) => {
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
+                ctx.fillStyle = 'linear-gradient(135deg, #667eea, #764ba2)';
+                const gradient = ctx.createLinearGradient(pos.x - 25, pos.y - 25, pos.x + 25, pos.y + 25);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(label, pos.x, pos.y);
+            });
+        }
+
+        function graphAddNode() {
+            const label = document.getElementById('graphNode').value.toUpperCase();
+            if (label === '' || graphNodes.has(label)) return;
+            
+            const canvas = document.getElementById('graphCanvas');
+            const x = 50 + Math.random() * (canvas.offsetWidth - 100);
+            const y = 50 + Math.random() * (canvas.offsetHeight - 100);
+            
+            graphNodes.set(label, { x, y });
+            log('graphLog', `Added node "${label}"`);
+            renderGraph();
+        }
+
+        function graphAddEdge() {
+            const from = document.getElementById('graphFrom').value.toUpperCase();
+            const to = document.getElementById('graphTo').value.toUpperCase();
+            
+            if (!graphNodes.has(from) || !graphNodes.has(to)) {
+                log('graphLog', 'Both nodes must exist');
+                return;
+            }
+            
+            graphEdges.push([from, to]);
+            log('graphLog', `Added edge ${from} → ${to}`);
+            renderGraph();
+        }
+
+        function graphBFS() {
+            if (graphNodes.size === 0) return;
+            
+            const start = graphNodes.keys().next().value;
+            const visited = new Set();
+            const queue = [start];
+            const result = [];
+            
+            while (queue.length > 0) {
+                const node = queue.shift();
+                if (visited.has(node)) continue;
+                visited.add(node);
+                result.push(node);
+                
+                graphEdges.forEach(([from, to]) => {
+                    if (from === node && !visited.has(to)) queue.push(to);
+                    if (to === node && !visited.has(from)) queue.push(from);
+                });
+            }
+            
+            log('graphLog', `BFS: ${result.join(' → ')}`);
+        }
+
+        function graphDFS() {
+            if (graphNodes.size === 0) return;
+            
+            const start = graphNodes.keys().next().value;
+            const visited = new Set();
+            const result = [];
+            
+            function dfs(node) {
+                if (visited.has(node)) return;
+                visited.add(node);
+                result.push(node);
+                
+                graphEdges.forEach(([from, to]) => {
+                    if (from === node) dfs(to);
+                    if (to === node) dfs(from);
+                });
+            }
+            
+            dfs(start);
+            log('graphLog', `DFS: ${result.join(' → ')}`);
+        }
+
+        function graphClear() {
+            graphNodes.clear();
+            graphEdges = [];
+            renderGraph();
+            log('graphLog', 'Graph cleared');
+        }
+
+        // ==================== TRIE ====================
+        class TrieNode {
+            constructor() {
+                this.children = {};
+                this.isEnd = false;
+            }
+        }
+
+        let trieRoot = new TrieNode();
+        let trieWords = [];
+
+        function renderTrie() {
+            const container = document.getElementById('trieContainer');
+            if (trieWords.length === 0) {
+                container.innerHTML = '<p style="color: #888;">Trie is empty</p>';
+                return;
+            }
+            container.innerHTML = trieWords.map(word => 
+                `<span class="trie-word">${word}</span>`
+            ).join('');
+        }
+
+        function trieInsert() {
+            const word = document.getElementById('trieInput').value.toLowerCase();
+            if (word === '') return;
+            
+            let node = trieRoot;
+            for (const char of word) {
+                if (!node.children[char]) {
+                    node.children[char] = new TrieNode();
+                }
+                node = node.children[char];
+            }
+            node.isEnd = true;
+            
+            if (!trieWords.includes(word)) {
+                trieWords.push(word);
+                trieWords.sort();
+            }
+            
+            log('trieLog', `Inserted "${word}"`);
+            renderTrie();
+        }
+
+        function trieSearch() {
+            const word = document.getElementById('trieInput').value.toLowerCase();
+            if (word === '') return;
+            
+            let node = trieRoot;
+            for (const char of word) {
+                if (!node.children[char]) {
+                    log('trieLog', `"${word}" not found`);
+                    return;
+                }
+                node = node.children[char];
+            }
+            
+            if (node.isEnd) {
+                log('trieLog', `"${word}" found!`);
+            } else {
+                log('trieLog', `"${word}" is a prefix but not a complete word`);
+            }
+        }
+
+        function triePrefix() {
+            const prefix = document.getElementById('trieInput').value.toLowerCase();
+            if (prefix === '') return;
+            
+            const matches = trieWords.filter(word => word.startsWith(prefix));
+            if (matches.length > 0) {
+                log('trieLog', `Words with prefix "${prefix}": ${matches.join(', ')}`);
+            } else {
+                log('trieLog', `No words found with prefix "${prefix}"`);
+            }
+        }
+
+        function trieClear() {
+            trieRoot = new TrieNode();
+            trieWords = [];
+            renderTrie();
+            log('trieLog', 'Trie cleared');
+        }
+
+        // Initialize all visualizations
+        window.onload = function() {
+            renderArray();
+            renderStack();
+            renderQueue();
+            renderDeque();
+            renderLL();
+            renderHash();
+            renderTree();
+            renderBST();
+            renderHeap();
+            renderPQ();
+            renderGraph();
+            renderTrie();
+        };
+
+        // Handle window resize for graph
+        window.onresize = function() {
+            renderGraph();
+        };
+    </script>
+</body>
+</html>
