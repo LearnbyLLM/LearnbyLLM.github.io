@@ -273,7 +273,7 @@
     // =============================================
 
     // Tool metadata - add descriptions and icons for your tools
-    // Keys should match filenames (without .html)
+    // Keys should match filenames (without .html) or directory names
     const toolMetadata = {
       'data-structures': {
         icon: '📊',
@@ -285,12 +285,11 @@
         description: 'Understand how Large Language Models work through interactive visualizations.',
         color: '#f093fb'
       },
-      // Add more tools here as you create them:
-      // 'sorting-algorithms': {
-      //     icon: '🔄',
-      //     description: 'Visualize bubble sort, merge sort, quicksort, and more.',
-      //     color: '#00d4ff'
-      // },
+      'notebooklm-guide': {
+        icon: '📓',
+        description: 'A practical guide to using Google\'s NotebookLM for investment research — prompts, workflows, and limitations.',
+        color: '#2563eb'
+      },
     };
 
     // Default metadata for tools without custom info
@@ -316,22 +315,24 @@
 
         const files = await response.json();
 
-        // Filter for HTML files only
+        // Include HTML files and directories (guide-style tools)
         allTools = files
-          .filter(file => file.name.endsWith('.html'))
+          .filter(file => file.name.endsWith('.html') || file.type === 'dir')
+          .filter(file => file.name !== '.gitkeep')
           .map(file => {
-            const nameWithoutExt = file.name.replace('.html', '');
-            const displayName = nameWithoutExt
+            const isDir = file.type === 'dir';
+            const key = isDir ? file.name : file.name.replace('.html', '');
+            const displayName = key
               .split('-')
               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
               .join(' ');
 
-            const meta = toolMetadata[nameWithoutExt] || defaultMeta;
+            const meta = toolMetadata[key] || defaultMeta;
 
             return {
               name: displayName,
-              filename: file.name,
-              path: `${TOOLS_FOLDER}/${file.name}`,
+              filename: isDir ? 'Guide' : file.name,
+              path: isDir ? `${TOOLS_FOLDER}/${file.name}/` : `${TOOLS_FOLDER}/${file.name}`,
               ...meta
             };
           });
@@ -400,7 +401,7 @@
                     <div class="tool-name">${tool.name}</div>
                     <div class="tool-description">${tool.description}</div>
                     <div class="tool-meta">
-                        📄 ${tool.filename}
+                        ${tool.filename === 'Guide' ? '📖 Guide' : '📄 ' + tool.filename}
                     </div>
                 </a>
             `).join('');

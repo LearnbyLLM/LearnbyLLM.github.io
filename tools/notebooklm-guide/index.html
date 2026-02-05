@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotebookLM for Investors</title>
+  <meta name="description" content="A practical guide to using Google's NotebookLM for investment research and market analysis">
+  
+  <!-- Docsify -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --theme-color: #2563eb;
+      --theme-color-light: #dbeafe;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --bg-code: #f1f5f9;
+      --border-color: #e2e8f0;
+      --warning-bg: #fef3c7;
+      --warning-border: #f59e0b;
+      --tip-bg: #dcfce7;
+      --tip-border: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-primary);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #fafbfc;
+      border-right: 1px solid var(--border-color);
+    }
+
+    .sidebar-nav {
+      padding: 1.5rem 0;
+    }
+
+    .sidebar-nav li {
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar-nav a {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.5rem 1.5rem;
+      display: block;
+      transition: all 0.15s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-nav a:hover {
+      color: var(--theme-color);
+      background: var(--theme-color-light);
+    }
+
+    .sidebar-nav a.active {
+      color: var(--theme-color);
+      border-left-color: var(--theme-color);
+      background: var(--theme-color-light);
+    }
+
+    .sidebar-nav ul ul a {
+      padding-left: 2.5rem;
+      font-size: 0.85rem;
+      font-weight: 400;
+    }
+
+    .app-name-link {
+      font-weight: 600 !important;
+      font-size: 1.1rem !important;
+      color: var(--text-primary) !important;
+      padding: 1rem 1.5rem !important;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Main content */
+    .markdown-section {
+      max-width: 800px;
+      padding: 2rem 3rem 4rem;
+    }
+
+    .markdown-section h1 {
+      font-size: 2.25rem;
+      font-weight: 600;
+      margin: 0 0 1.5rem 0;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--theme-color);
+      color: var(--text-primary);
+    }
+
+    .markdown-section h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 2.5rem 0 1rem 0;
+      color: var(--text-primary);
+    }
+
+    .markdown-section h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 2rem 0 0.75rem 0;
+      color: var(--text-primary);
+    }
+
+    .markdown-section p {
+      margin: 0 0 1.25rem 0;
+      color: var(--text-secondary);
+    }
+
+    .markdown-section strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .markdown-section ul, .markdown-section ol {
+      padding-left: 1.5rem;
+      margin: 0 0 1.25rem 0;
+    }
+
+    .markdown-section li {
+      margin: 0.5rem 0;
+      color: var(--text-secondary);
+    }
+
+    .markdown-section a {
+      color: var(--theme-color);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s ease;
+    }
+
+    .markdown-section a:hover {
+      border-bottom-color: var(--theme-color);
+    }
+
+    /* Code */
+    .markdown-section code {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg-code);
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 0.875em;
+      color: var(--text-primary);
+    }
+
+    .markdown-section pre {
+      background: var(--bg-code);
+      border-radius: 8px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .markdown-section pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* Blockquotes as callouts */
+    .markdown-section blockquote {
+      margin: 1.5rem 0;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--tip-border);
+      background: var(--tip-bg);
+    }
+
+    .markdown-section blockquote p {
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    /* Warning callouts - use > ⚠️ prefix */
+    .markdown-section blockquote p:first-child:has(text^="⚠️"),
+    .markdown-section blockquote:has(p:first-child:contains("⚠️")) {
+      border-left-color: var(--warning-border);
+      background: var(--warning-bg);
+    }
+
+    /* Tables */
+    .markdown-section table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    .markdown-section th {
+      background: var(--bg-code);
+      font-weight: 600;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .markdown-section td {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+
+    .markdown-section tr:hover td {
+      background: #fafbfc;
+    }
+
+    /* Cover page */
+    section.cover {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+    }
+
+    section.cover .cover-main {
+      max-width: 700px;
+    }
+
+    section.cover h1 {
+      font-size: 3rem;
+      font-weight: 600;
+    }
+
+    section.cover p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    section.cover a.anchor {
+      border-bottom: 2px solid rgba(255,255,255,0.3);
+      transition: border-color 0.15s ease;
+    }
+
+    section.cover a.anchor:hover {
+      border-bottom-color: white;
+    }
+
+    /* Search */
+    .search {
+      margin: 0;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search input {
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 0.6rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      width: 100%;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .search input:focus {
+      outline: none;
+      border-color: var(--theme-color);
+      box-shadow: 0 0 0 3px var(--theme-color-light);
+    }
+
+    /* Last updated badge */
+    .last-updated {
+      display: inline-block;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: var(--bg-code);
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .markdown-section {
+        padding: 1.5rem;
+      }
+      
+      .markdown-section h1 {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  
+  <script>
+    window.$docsify = {
+      name: '📊 NotebookLM for Investors',
+      repo: '',
+      loadSidebar: true,
+      subMaxLevel: 2,
+      auto2top: true,
+      search: {
+        placeholder: 'Search...',
+        noData: 'No results',
+        depth: 3
+      },
+      pagination: {
+        previousText: '← Previous',
+        nextText: 'Next →'
+      }
+    }
+  </script>
+  
+  <!-- Docsify core -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+  
+  <!-- Plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+</body>
+</html>
