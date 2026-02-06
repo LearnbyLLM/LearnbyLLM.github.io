@@ -44,10 +44,10 @@ This guide covers:
 
 | I want to... | Go here |
 |-------------|---------|
-| Understand the basics | [What Are Agent Primitives?](getting-started/primitives.md) |
+| Understand the basics | [What Are Agentic Frameworks?](getting-started/what-are-agentic-frameworks.md) |
 | See the four-agent system | [Reference Implementation](reference-implementation/overview.md) |
-| Secure my agents | [Security Model](security/boundaries.md) |
-| Copy a working setup | [Agent Templates](templates/planner.md) |
+| Secure my agents | [Trust Boundaries](security/trust-boundaries.md) |
+| Copy a working setup | [Copy-Paste Agents](templates/copy-paste-agents.md) |
 
 ---
 
@@ -139,4 +139,4 @@ All code examples tested with:
 
 ---
 
-[Get Started →](getting-started/primitives.md)
+[Get Started →](getting-started/what-are-agentic-frameworks.md)
