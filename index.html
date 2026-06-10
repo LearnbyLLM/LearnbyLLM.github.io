@@ -19,6 +19,12 @@
 
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
   <!-- Set theme before paint to avoid a flash of the wrong theme -->
   <script>
     document.documentElement.dataset.theme =
@@ -30,30 +36,26 @@
     :root,
     [data-theme="dark"] {
       --bg: #0a0a0c;
-      --bg-elevated: #131316;
-      --bg-hover: #18181c;
+      --bg-hover: #121216;
       --border: #232329;
-      --border-strong: #34343c;
+      --border-strong: #3a3a42;
       --text: #ededf0;
       --text-secondary: #9b9ba4;
       --text-tertiary: #62626c;
       --accent: #38bdf8;
       --accent-soft: rgba(56, 189, 248, 0.09);
-      --accent-border: rgba(56, 189, 248, 0.35);
     }
 
     [data-theme="light"] {
-      --bg: #fafafa;
-      --bg-elevated: #ffffff;
-      --bg-hover: #f4f4f5;
-      --border: #e4e4e7;
-      --border-strong: #d4d4d8;
-      --text: #18181b;
-      --text-secondary: #52525b;
-      --text-tertiary: #a1a1aa;
+      --bg: #fbfbfa;
+      --bg-hover: #f3f3f1;
+      --border: #e6e6e2;
+      --border-strong: #cfcfc9;
+      --text: #1a1a1c;
+      --text-secondary: #57575e;
+      --text-tertiary: #9a9aa0;
       --accent: #0284c7;
       --accent-soft: rgba(2, 132, 199, 0.07);
-      --accent-border: rgba(2, 132, 199, 0.3);
     }
 
     * {
@@ -62,8 +64,13 @@
       box-sizing: border-box;
     }
 
+    ::selection {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
       min-height: 100vh;
       color: var(--text);
@@ -71,244 +78,271 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    .mono {
+      font-family: 'IBM Plex Mono', 'Consolas', monospace;
+    }
+
     .container {
-      max-width: 880px;
+      max-width: 760px;
       margin: 0 auto;
-      padding: 0 24px 60px;
+      padding: 0 24px 64px;
     }
 
     .topbar {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
-      padding: 22px 0;
-      margin-bottom: 48px;
+      padding: 26px 0;
+      margin-bottom: 64px;
     }
 
     .wordmark {
-      font-size: 1.05rem;
-      font-weight: 650;
-      letter-spacing: -0.01em;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.92rem;
+      font-weight: 500;
       color: var(--text);
       text-decoration: none;
+      letter-spacing: -0.02em;
     }
 
-    .wordmark span {
+    .wordmark::before {
+      content: '~/';
+      color: var(--text-tertiary);
+    }
+
+    .wordmark::after {
+      content: '_';
       color: var(--accent);
+      animation: blink 1.2s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
     }
 
     .theme-toggle {
-      width: 36px;
-      height: 36px;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: var(--bg-elevated);
-      color: var(--text-secondary);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      border: none;
+      background: none;
+      color: var(--text-tertiary);
       cursor: pointer;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: border-color 0.2s ease, color 0.2s ease;
+      padding: 4px 0;
+      transition: color 0.15s ease;
     }
 
     .theme-toggle:hover {
-      border-color: var(--border-strong);
-      color: var(--text);
+      color: var(--accent);
     }
 
     h1 {
-      font-size: 1.9rem;
-      font-weight: 650;
-      letter-spacing: -0.025em;
-      margin-bottom: 10px;
+      font-size: 2.1rem;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      line-height: 1.2;
+      margin-bottom: 18px;
+      max-width: 600px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
     }
 
     .subtitle {
       color: var(--text-secondary);
-      font-size: 1rem;
-      line-height: 1.6;
-      margin-bottom: 36px;
-      max-width: 560px;
+      font-size: 0.98rem;
+      line-height: 1.65;
+      margin-bottom: 56px;
+      max-width: 540px;
     }
 
+    /* ---------- search + filters ---------- */
     .toolbar {
       display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-bottom: 28px;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-strong);
+      padding-bottom: 14px;
+      margin-bottom: 0;
+    }
+
+    .tag-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+
+    .tag-chip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      user-select: none;
+      padding: 2px 0;
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s ease;
+    }
+
+    .tag-chip:hover {
+      color: var(--text);
+    }
+
+    .tag-chip.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .search-wrap {
+      flex: 1;
+      min-width: 180px;
+      max-width: 240px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .search-wrap::before {
+      content: '/';
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--text-tertiary);
+      font-size: 0.8rem;
     }
 
     #searchInput {
       width: 100%;
-      padding: 11px 16px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--bg-elevated);
+      border: none;
+      background: none;
       color: var(--text);
-      font-size: 0.95rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
       outline: none;
-      transition: border-color 0.2s ease;
-    }
-
-    #searchInput:focus {
-      border-color: var(--accent-border);
+      padding: 2px 0;
     }
 
     #searchInput::placeholder {
       color: var(--text-tertiary);
     }
 
-    .tag-filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    /* ---------- index list ---------- */
+    .tools-list {
+      margin-bottom: 80px;
     }
 
-    .tag-chip {
-      padding: 6px 14px;
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: 0.82rem;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-
-    .tag-chip:hover {
-      border-color: var(--border-strong);
-      color: var(--text);
-    }
-
-    .tag-chip.active {
-      background: var(--accent-soft);
-      border-color: var(--accent-border);
-      color: var(--accent);
-      font-weight: 550;
-    }
-
-    .tools-grid {
+    .tool-row {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 14px;
-      margin-bottom: 56px;
-    }
-
-    .tool-card {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
+      grid-template-columns: 52px 1fr auto;
+      gap: 8px 20px;
+      align-items: baseline;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--border);
       text-decoration: none;
       color: var(--text);
-      transition: border-color 0.15s ease, background 0.15s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      position: relative;
+      transition: background 0.15s ease;
     }
 
-    .tool-card:hover {
-      border-color: var(--border-strong);
-      background: var(--bg-hover);
+    .tool-row:hover {
+      background: linear-gradient(90deg, transparent, var(--accent-soft) 8%, var(--accent-soft) 92%, transparent);
     }
 
-    .tool-card-head {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .tool-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      transition: color 0.15s ease;
     }
 
-    .tool-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      background: var(--accent-soft);
-      flex-shrink: 0;
+    .tool-row:hover .tool-num {
+      color: var(--accent);
+    }
+
+    .tool-main {
+      min-width: 0;
     }
 
     .tool-name {
-      font-size: 0.98rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.015em;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+
+    .tool-row:hover .tool-name::after {
+      content: ' →';
+      color: var(--accent);
     }
 
     .tool-description {
       color: var(--text-secondary);
-      font-size: 0.86rem;
-      line-height: 1.55;
-      flex: 1;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      max-width: 460px;
     }
 
-    .tool-foot {
+    .tool-side {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      text-align: right;
     }
 
     .tool-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-
-    .tool-tag {
-      font-size: 0.7rem;
-      padding: 2px 9px;
-      border-radius: 50px;
-      border: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: var(--text-tertiary);
     }
 
     .tool-type {
-      font-size: 0.72rem;
-      color: var(--text-tertiary);
-      white-space: nowrap;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 2px 8px;
+      border-radius: 3px;
     }
 
+    /* ---------- what's new ---------- */
     .section-title {
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-tertiary);
-      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border-strong);
+      padding-bottom: 14px;
+      margin-bottom: 0;
     }
 
     .whats-new {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--bg-elevated);
-      padding: 6px 20px;
-      margin-bottom: 56px;
+      margin-bottom: 80px;
     }
 
     .whats-new-item {
-      display: flex;
-      gap: 16px;
-      padding: 14px 0;
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 20px;
+      padding: 16px 0;
       border-bottom: 1px solid var(--border);
       font-size: 0.88rem;
-      line-height: 1.5;
-    }
-
-    .whats-new-item:last-child {
-      border-bottom: none;
+      line-height: 1.6;
+      align-items: baseline;
     }
 
     .whats-new-date {
+      font-family: 'IBM Plex Mono', monospace;
       color: var(--text-tertiary);
-      font-variant-numeric: tabular-nums;
+      font-size: 0.72rem;
       white-space: nowrap;
-      flex-shrink: 0;
-      font-size: 0.82rem;
-      padding-top: 1px;
     }
 
     .whats-new-text {
@@ -320,56 +354,35 @@
       font-weight: 600;
     }
 
-    .stats-line {
-      color: var(--text-tertiary);
-      font-size: 0.82rem;
-      margin-bottom: 28px;
-    }
-
+    /* ---------- states ---------- */
     .loading {
-      grid-column: 1 / -1;
       text-align: center;
       padding: 60px;
       color: var(--text-tertiary);
-    }
-
-    .loading-spinner {
-      width: 28px;
-      height: 28px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
     }
 
     .error {
-      grid-column: 1 / -1;
       text-align: center;
       padding: 40px;
       color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      border-radius: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
     }
 
     .empty-state {
-      grid-column: 1 / -1;
       text-align: center;
       padding: 50px;
       color: var(--text-tertiary);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
     }
 
     footer {
-      padding-top: 28px;
-      border-top: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace;
       color: var(--text-tertiary);
-      font-size: 0.82rem;
+      font-size: 0.74rem;
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
@@ -385,17 +398,28 @@
       color: var(--accent);
     }
 
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      .tools-grid {
-        grid-template-columns: 1fr;
-      }
-
+    @media (max-width: 640px) {
       .topbar {
-        margin-bottom: 32px;
+        margin-bottom: 44px;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      .tool-row {
+        grid-template-columns: 40px 1fr;
+      }
+
+      .tool-side {
+        grid-column: 2;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .whats-new-item {
+        grid-template-columns: 40px 1fr;
       }
     }
   </style>
@@ -404,36 +428,33 @@
 <body>
   <div class="container">
     <nav class="topbar">
-      <a href="/" class="wordmark">Learn<span>by</span>LLM</a>
-      <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">◐</button>
+      <a href="/" class="wordmark">learnbyllm</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">[theme]</button>
     </nav>
 
     <header>
-      <h1>Interactive learning tools</h1>
-      <p class="subtitle">Visualizations and guides for understanding complex concepts — language models,
-        data structures, agents, and more. No installs, everything runs in your browser.</p>
+      <h1>An index of interactive tools for learning <em>hard things</em>.</h1>
+      <p class="subtitle">Visual, hands-on explanations of language models, data structures, agents,
+        and more. No installs, no sign-ups — everything runs in your browser.</p>
     </header>
 
     <div class="toolbar">
-      <input type="text" id="searchInput" placeholder="Search tools…  ( / )" oninput="filterTools()">
       <div class="tag-filters" id="tagFilters"></div>
-    </div>
-
-    <div class="tools-grid" id="toolsGrid">
-      <div class="loading">
-        <div class="loading-spinner"></div>
-        <p>Loading tools…</p>
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="search" oninput="filterTools()">
       </div>
     </div>
 
-    <section>
-      <h2 class="section-title">What's new</h2>
-      <div class="whats-new" id="whatsNew"></div>
-    </section>
+    <div class="tools-list" id="toolsGrid">
+      <div class="loading">loading index…</div>
+    </div>
+
+    <h2 class="section-title">Changelog</h2>
+    <div class="whats-new" id="whatsNew"></div>
 
     <footer>
       <p><span id="toolCount">–</span> tools · updated <span id="lastUpdated">–</span></p>
-      <p><a href="https://github.com/LearnbyLLM/LearnbyLLM.github.io" target="_blank" rel="noopener">GitHub</a></p>
+      <p><a href="https://github.com/LearnbyLLM/LearnbyLLM.github.io" target="_blank" rel="noopener">github ↗</a></p>
     </footer>
   </div>
 
@@ -446,38 +467,33 @@
     const TOOLS_FOLDER = 'tools';
     // =============================================
 
-    // Tool metadata - add descriptions and icons for your tools
-    // Keys should match filenames (without .html) or directory names
+    // Tool metadata - add descriptions for your tools.
+    // Keys should match filenames (without .html) or directory names.
+    // `name` overrides the auto-generated display name.
     const toolMetadata = {
       'data-structures': {
-        icon: '📊',
         description: 'Interactive explanations of arrays, stacks, queues, trees, heaps, graphs, and more.',
         tags: ['CS Fundamentals']
       },
       'blockchain': {
-        icon: '⛓️',
         description: 'How blockchains work — hashing, blocks, mining, and consensus, explained interactively.',
         tags: ['CS Fundamentals']
       },
       'llm-intuition': {
         name: 'LLM Intuition',
-        icon: '🧠',
         description: 'Understand how Large Language Models work through interactive visualizations.',
         tags: ['AI']
       },
       'transformer-explorer': {
-        icon: '🔬',
         description: 'Step inside a transformer — tokenization, embeddings, attention, and next-token prediction, visualized.',
         tags: ['AI']
       },
       'notebooklm-guide': {
         name: 'NotebookLM Guide',
-        icon: '📓',
         description: 'A practical guide to using Google\'s NotebookLM for investment research — prompts, workflows, and limitations.',
         tags: ['AI', 'Finance', 'Guide']
       },
       'agentic-frameworks-guide': {
-        icon: '🤖',
         description: 'Build multi-agent systems using Claude Code\'s native features — subagents, hooks, skills, and CLAUDE.md.',
         tags: ['AI', 'Guide']
       },
@@ -485,7 +501,6 @@
 
     // Default metadata for tools without custom info
     const defaultMeta = {
-      icon: '📚',
       description: 'An interactive learning tool.',
       tags: []
     };
@@ -502,20 +517,11 @@
     let activeTag = 'All';
 
     // ---------- theme ----------
-    const themeToggle = document.getElementById('themeToggle');
-
-    function applyThemeIcon() {
-      themeToggle.textContent = document.documentElement.dataset.theme === 'light' ? '☾' : '☀';
-    }
-
-    themeToggle.addEventListener('click', () => {
+    document.getElementById('themeToggle').addEventListener('click', () => {
       const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
       document.documentElement.dataset.theme = next;
       localStorage.setItem('theme', next);
-      applyThemeIcon();
     });
-
-    applyThemeIcon();
 
     // ---------- data loading ----------
     // Load the tool list from the static tools.json (generated by a GitHub
@@ -557,7 +563,7 @@
             const meta = toolMetadata[key] || defaultMeta;
 
             return {
-              type: isDir ? 'Guide' : 'Interactive',
+              type: isDir ? 'guide' : 'interactive',
               path: isDir ? `${TOOLS_FOLDER}/${file.name}/` : `${TOOLS_FOLDER}/${file.name}`,
               name: displayName,
               ...meta // metadata may override the auto-generated name
@@ -571,12 +577,7 @@
 
       } catch (error) {
         console.error('Error fetching tools:', error);
-        grid.innerHTML = `
-                    <div class="error">
-                        <h3>Couldn't load tools</h3>
-                        <p style="margin-top: 8px;">Looking for: ${GITHUB_USERNAME}/${GITHUB_REPO}/${TOOLS_FOLDER}</p>
-                    </div>
-                `;
+        grid.innerHTML = `<div class="error">couldn't load the tool index — try refreshing</div>`;
       }
     }
 
@@ -625,27 +626,20 @@
       const grid = document.getElementById('toolsGrid');
 
       if (tools.length === 0) {
-        grid.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No tools found</h3>
-                        <p style="margin-top: 6px;">Try a different search term</p>
-                    </div>
-                `;
+        grid.innerHTML = `<div class="empty-state">nothing matches — try a different search</div>`;
         return;
       }
 
-      grid.innerHTML = tools.map(tool => `
-                <a href="${tool.path}" class="tool-card">
-                    <div class="tool-card-head">
-                        <div class="tool-icon">${tool.icon}</div>
-                        <div class="tool-name">${tool.name}</div>
+      grid.innerHTML = tools.map((tool, i) => `
+                <a href="${tool.path}" class="tool-row">
+                    <span class="tool-num">${String(i + 1).padStart(2, '0')}</span>
+                    <div class="tool-main">
+                        <span class="tool-name">${tool.name}</span>
+                        <div class="tool-description">${tool.description}</div>
                     </div>
-                    <div class="tool-description">${tool.description}</div>
-                    <div class="tool-foot">
-                        <div class="tool-tags">
-                            ${(tool.tags || []).map(tag => `<span class="tool-tag">${tag}</span>`).join('')}
-                        </div>
+                    <div class="tool-side">
                         <span class="tool-type">${tool.type}</span>
+                        <span class="tool-tags">${(tool.tags || []).join(' · ')}</span>
                     </div>
                 </a>
             `).join('');
@@ -655,7 +649,7 @@
       const container = document.getElementById('whatsNew');
       container.innerHTML = whatsNew.slice(0, WHATS_NEW_LIMIT).map(item => {
         const date = new Date(item.date + 'T00:00:00');
-        const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase();
         return `
                 <div class="whats-new-item">
                     <span class="whats-new-date">${label}</span>
