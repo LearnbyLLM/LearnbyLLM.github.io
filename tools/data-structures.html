@@ -12,85 +12,21 @@
     <meta property="og:image" content="https://learnbyllm.github.io/assets/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/tool-theme.css">
+    <script src="../assets/theme.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            color: #fff;
-        }
-
-        .header {
-            text-align: center;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header p {
-            color: #a0a0a0;
-            font-size: 1.1rem;
-        }
-
-        .nav-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-tab {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-
-        .nav-tab:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .nav-tab.active {
-            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
-        }
-
         .container {
-            max-width: 1200px;
+            max-width: 1040px;
             margin: 0 auto;
-            padding: 30px;
+            padding: 30px 24px 60px;
         }
 
         .ds-section {
             display: none;
-            animation: fadeIn 0.5s ease;
+            animation: fadeIn 0.4s ease;
         }
 
         .ds-section.active {
@@ -98,40 +34,20 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .card h2 {
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            color: #00d4ff;
-        }
-
-        .card h3 {
-            font-size: 1.2rem;
-            margin: 20px 0 10px;
-            color: #7b2cbf;
-        }
-
         .description {
-            color: #b0b0b0;
-            line-height: 1.8;
+            color: var(--text-secondary);
+            line-height: 1.7;
             margin-bottom: 20px;
         }
 
         .visualization {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 30px;
             margin: 20px 0;
             min-height: 200px;
@@ -149,48 +65,27 @@
             justify-content: center;
         }
 
-        .controls input {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            font-size: 1rem;
+        .controls input,
+        .controls select {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.88rem;
+            padding: 9px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
             width: 120px;
+            transition: border-color 0.15s ease;
+        }
+
+        .controls input:focus,
+        .controls select:focus {
+            border-color: var(--accent);
         }
 
         .controls input::placeholder {
-            color: #666;
-        }
-
-        .controls button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            color: #fff;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
-            color: #fff;
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
-
-        .controls button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            color: var(--text-tertiary);
         }
 
         /* Stack Styles */
@@ -206,11 +101,14 @@
 
         .stack-item {
             width: 150px;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 10px;
+            padding: 13px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            color: var(--text);
+            border-radius: 8px;
             text-align: center;
-            font-weight: bold;
             animation: stackPush 0.3s ease;
         }
 
@@ -221,9 +119,9 @@
 
         .stack-base {
             width: 180px;
-            height: 10px;
-            background: #444;
-            border-radius: 5px;
+            height: 8px;
+            background: var(--border-strong);
+            border-radius: 4px;
             margin-top: 10px;
         }
 
@@ -240,11 +138,14 @@
 
         .queue-item {
             min-width: 80px;
-            padding: 20px;
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-            border-radius: 10px;
+            padding: 18px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+            background: rgba(167, 139, 250, 0.12);
+            border: 1px solid #a78bfa;
+            color: var(--text);
+            border-radius: 8px;
             text-align: center;
-            font-weight: bold;
             animation: queueEnqueue 0.3s ease;
         }
 
@@ -258,8 +159,9 @@
             justify-content: space-between;
             width: 100%;
             padding: 0 20px;
-            color: #888;
-            font-size: 0.9rem;
+            color: var(--text-tertiary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.78rem;
         }
 
         /* Linked List Styles */
@@ -286,19 +188,22 @@
         .ll-node-content {
             width: 70px;
             height: 70px;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            border-radius: 10px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            color: var(--text);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+            font-size: 1.1rem;
         }
 
         .ll-arrow {
             width: 30px;
-            height: 3px;
-            background: #00d4ff;
+            height: 2px;
+            background: var(--text-tertiary);
             position: relative;
         }
 
@@ -308,15 +213,17 @@
             right: 0;
             top: -5px;
             border: 6px solid transparent;
-            border-left: 10px solid #00d4ff;
+            border-left: 10px solid var(--text-tertiary);
         }
 
         .ll-null {
             padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            color: #888;
-            font-style: italic;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-tertiary);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
         }
 
         /* Tree Styles */
@@ -338,18 +245,23 @@
         .tree-node {
             width: 50px;
             height: 50px;
-            background: linear-gradient(135deg, #fa709a, #fee140);
-            border-radius: 50%;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            color: var(--text);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
             position: relative;
             animation: nodeAppear 0.3s ease;
         }
 
         .tree-node.highlight {
-            box-shadow: 0 0 20px #00d4ff;
+            background: #38bdf8;
+            border-color: #38bdf8;
+            color: #fff;
         }
 
         /* Heap Styles */
@@ -364,16 +276,21 @@
         .heap-array-item {
             width: 50px;
             height: 50px;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            color: var(--text);
             border-radius: 8px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
         }
 
         .heap-array-item.filled {
-            background: linear-gradient(135deg, #11998e, #38ef7d);
+            background: rgba(52, 211, 153, 0.12);
+            border-color: var(--ok);
         }
 
         /* Hash Table Styles */
@@ -395,24 +312,28 @@
         .hash-index {
             width: 60px;
             height: 40px;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: #888;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+            color: var(--text-tertiary);
         }
 
         .hash-item {
             width: 60px;
             padding: 10px;
-            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            background: rgba(167, 139, 250, 0.12);
+            border: 1px solid #a78bfa;
             border-radius: 8px;
             text-align: center;
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: #333;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text);
             animation: nodeAppear 0.3s ease;
         }
 
@@ -420,7 +341,8 @@
         .graph-canvas {
             width: 100%;
             height: 300px;
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 10px;
         }
 
@@ -435,8 +357,9 @@
         .array-item {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 10px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -445,13 +368,16 @@
         }
 
         .array-item .value {
-            font-weight: bold;
-            font-size: 1.2rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+            font-size: 1.1rem;
+            color: var(--text);
         }
 
         .array-item .index {
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.6);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--text-tertiary);
         }
 
         /* Complexity Table */
@@ -463,54 +389,82 @@
 
         .complexity-table th,
         .complexity-table td {
-            padding: 12px;
+            padding: 10px 12px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
         }
 
         .complexity-table th {
-            background: rgba(0, 212, 255, 0.2);
-            color: #00d4ff;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.74rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            background: var(--bg-hover);
+            color: var(--text-secondary);
         }
 
         .complexity-table td {
-            background: rgba(255, 255, 255, 0.05);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
-        .complexity-good { color: #38ef7d; }
-        .complexity-medium { color: #fee140; }
-        .complexity-bad { color: #ff6b6b; }
+        .complexity-good,
+        .complexity-medium,
+        .complexity-bad {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+        }
+
+        td.complexity-good, .complexity-good { color: var(--ok); background: rgba(52, 211, 153, 0.12); }
+        td.complexity-medium, .complexity-medium { color: var(--warn); background: rgba(251, 191, 36, 0.12); }
+        td.complexity-bad, .complexity-bad { color: var(--bad); background: rgba(248, 113, 113, 0.12); }
 
         /* Info Box */
         .info-box {
-            background: rgba(0, 212, 255, 0.1);
-            border-left: 4px solid #00d4ff;
+            background: var(--accent-soft);
+            border-left: 3px solid var(--accent);
             padding: 15px 20px;
-            border-radius: 0 10px 10px 0;
+            border-radius: 0 8px 8px 0;
             margin: 15px 0;
         }
 
         .info-box h4 {
-            color: #00d4ff;
-            margin-bottom: 5px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.78rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+
+        .info-box p {
+            margin-bottom: 4px;
         }
 
         /* Log */
         .log {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             padding: 15px;
             margin-top: 15px;
             max-height: 150px;
             overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.9rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.82rem;
         }
 
         .log-entry {
             padding: 5px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: #00d4ff;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .log-entry:first-child {
+            color: var(--accent);
         }
 
         /* Deque Styles */
@@ -523,11 +477,14 @@
 
         .deque-item {
             min-width: 60px;
-            padding: 15px;
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-            border-radius: 10px;
+            padding: 14px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+            background: rgba(167, 139, 250, 0.12);
+            border: 1px solid #a78bfa;
+            color: var(--text);
+            border-radius: 8px;
             text-align: center;
-            font-weight: bold;
             animation: queueEnqueue 0.3s ease;
         }
 
@@ -543,48 +500,47 @@
         .pq-item {
             display: flex;
             justify-content: space-between;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #11998e, #38ef7d);
-            border-radius: 10px;
+            align-items: center;
+            padding: 13px 18px;
+            font-family: 'IBM Plex Mono', monospace;
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid var(--ok);
+            color: var(--text);
+            border-radius: 8px;
             animation: stackPush 0.3s ease;
         }
 
         .pq-item .priority {
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
             padding: 2px 10px;
-            border-radius: 10px;
-            font-size: 0.8rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
         }
 
         /* Trie Styles */
         .trie-display {
-            font-family: monospace;
-            font-size: 1rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.92rem;
             line-height: 1.8;
-            color: #00d4ff;
+            color: var(--text);
         }
 
         .trie-word {
             display: inline-block;
             padding: 5px 15px;
-            background: rgba(0, 212, 255, 0.2);
-            border-radius: 5px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            border-radius: 6px;
             margin: 5px;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8rem;
-            }
-
-            .nav-tabs {
-                padding: 10px;
-            }
-
-            .nav-tab {
-                padding: 8px 16px;
-                font-size: 0.85rem;
+            .tool-header h1 {
+                font-size: 1.6rem;
             }
 
             .container {
@@ -609,9 +565,12 @@
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>📊 Data Structures Visualizer</h1>
-        <p>Interactive visual explanations of fundamental data structures</p>
+    <nav class="site-topbar"><a href="../index.html" class="wordmark">learnbyllm</a><button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">[theme]</button></nav>
+
+    <header class="tool-header">
+        <p class="tool-kicker">interactive · cs fundamentals</p>
+        <h1>Data Structures Visualizer</h1>
+        <p class="tool-sub">Interactive visual explanations of fundamental data structures — arrays, stacks, queues, trees, heaps, graphs, and more.</p>
     </header>
 
     <nav class="nav-tabs">
@@ -715,7 +674,7 @@
                 </div>
 
                 <div class="visualization">
-                    <div style="text-align: center; color: #888; margin-bottom: 10px;">← TOP</div>
+                    <div style="text-align: center; color: var(--text-tertiary); margin-bottom: 10px;">← TOP</div>
                     <div class="stack-container" id="stackContainer"></div>
                     <div class="stack-base"></div>
                 </div>
@@ -868,7 +827,7 @@
                 </div>
 
                 <div class="visualization">
-                    <div style="color: #888; margin-bottom: 10px;">HEAD →</div>
+                    <div style="color: var(--text-tertiary); margin-bottom: 10px;">HEAD →</div>
                     <div class="linkedlist-container" id="llContainer"></div>
                 </div>
 
@@ -901,7 +860,7 @@
                         <td class="complexity-good">O(1)</td>
                     </tr>
                 </table>
-                <p style="color: #888; font-size: 0.9rem; margin-top: 10px;">*O(1) if tail pointer is maintained</p>
+                <p style="color: var(--text-tertiary); font-size: 0.9rem; margin-top: 10px;">*O(1) if tail pointer is maintained</p>
             </div>
         </section>
 
@@ -930,7 +889,7 @@
                 </div>
 
                 <div class="visualization">
-                    <p style="color: #888; margin-bottom: 15px;">Hash Function: key.charCodeAt(0) % 10</p>
+                    <p style="color: var(--text-tertiary); margin-bottom: 15px;">Hash Function: key.charCodeAt(0) % 10</p>
                     <div class="hashtable-container" id="hashContainer"></div>
                 </div>
 
@@ -1072,7 +1031,7 @@
 
                 <div class="controls">
                     <input type="number" id="heapInput" placeholder="Value">
-                    <select id="heapType" style="padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.1); color: #fff; border: none;">
+                    <select id="heapType">
                         <option value="max">Max Heap</option>
                         <option value="min">Min Heap</option>
                     </select>
@@ -1083,7 +1042,7 @@
 
                 <div class="visualization">
                     <div class="tree-container" id="heapTreeContainer"></div>
-                    <div style="margin-top: 20px; color: #888;">Array Representation:</div>
+                    <div style="margin-top: 20px; color: var(--text-tertiary);">Array Representation:</div>
                     <div class="heap-array" id="heapArrayContainer"></div>
                 </div>
 
@@ -1122,7 +1081,7 @@
                 </div>
 
                 <div class="visualization">
-                    <p style="color: #888; margin-bottom: 15px;">Higher priority = Dequeued first</p>
+                    <p style="color: var(--text-tertiary); margin-bottom: 15px;">Higher priority = Dequeued first</p>
                     <div class="pq-container" id="pqContainer"></div>
                 </div>
 
@@ -1202,7 +1161,7 @@
                 </div>
 
                 <div class="visualization">
-                    <div style="color: #888; margin-bottom: 15px;">Words in Trie:</div>
+                    <div style="color: var(--text-tertiary); margin-bottom: 15px;">Words in Trie:</div>
                     <div class="trie-display" id="trieContainer"></div>
                 </div>
 
@@ -1227,7 +1186,7 @@
                         <td class="complexity-good">O(m)</td>
                     </tr>
                 </table>
-                <p style="color: #888; font-size: 0.9rem; margin-top: 10px;">m = length of the word</p>
+                <p style="color: var(--text-tertiary); font-size: 0.9rem; margin-top: 10px;">m = length of the word</p>
             </div>
         </section>
     </div>
@@ -1239,6 +1198,7 @@
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
             event.target.classList.add('active');
+            if (sectionId === 'graph') renderGraph();
         }
 
         // Utility Functions
@@ -1590,7 +1550,7 @@
         function renderTree() {
             const container = document.getElementById('treeContainer');
             if (!treeData) {
-                container.innerHTML = '<p style="color: #888;">No tree generated</p>';
+                container.innerHTML = '<p style="color: var(--text-tertiary);">No tree generated</p>';
                 return;
             }
             
@@ -1679,7 +1639,7 @@
         function renderBST() {
             const container = document.getElementById('bstContainer');
             if (!bstRoot) {
-                container.innerHTML = '<p style="color: #888;">BST is empty</p>';
+                container.innerHTML = '<p style="color: var(--text-tertiary);">BST is empty</p>';
                 return;
             }
             
@@ -1806,7 +1766,7 @@
             const arrayContainer = document.getElementById('heapArrayContainer');
             
             if (heapData.length === 0) {
-                treeContainer.innerHTML = '<p style="color: #888;">Heap is empty</p>';
+                treeContainer.innerHTML = '<p style="color: var(--text-tertiary);">Heap is empty</p>';
                 arrayContainer.innerHTML = '';
                 return;
             }
@@ -1832,7 +1792,7 @@
             arrayContainer.innerHTML = heapData.map((val, idx) => 
                 `<div class="heap-array-item filled">
                     <div>${val}</div>
-                    <div style="font-size: 0.7rem; color: rgba(0,0,0,0.5)">[${idx}]</div>
+                    <div style="font-size: 0.68rem; color: var(--text-tertiary)">[${idx}]</div>
                 </div>`
             ).join('');
         }
@@ -1880,7 +1840,7 @@
         function renderPQ() {
             const container = document.getElementById('pqContainer');
             if (pqData.length === 0) {
-                container.innerHTML = '<p style="color: #888;">Priority Queue is empty</p>';
+                container.innerHTML = '<p style="color: var(--text-tertiary);">Priority Queue is empty</p>';
                 return;
             }
             
@@ -1931,23 +1891,24 @@
 
         function renderGraph() {
             const canvas = document.getElementById('graphCanvas');
+            if (canvas.offsetWidth === 0) return; // section hidden; redrawn on show
             const ctx = canvas.getContext('2d');
-            
+
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (graphNodes.size === 0) {
-                ctx.fillStyle = '#888';
-                ctx.font = '16px Segoe UI';
+                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-tertiary').trim() || '#888888';
+                ctx.font = '14px "IBM Plex Mono", monospace';
                 ctx.textAlign = 'center';
                 ctx.fillText('Add nodes and edges to visualize the graph', canvas.width / 2, canvas.height / 2);
                 return;
             }
-            
+
             // Draw edges
-            ctx.strokeStyle = '#00d4ff';
+            ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 2;
             
             graphEdges.forEach(([from, to]) => {
@@ -1965,15 +1926,11 @@
             graphNodes.forEach((pos, label) => {
                 ctx.beginPath();
                 ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
-                ctx.fillStyle = 'linear-gradient(135deg, #667eea, #764ba2)';
-                const gradient = ctx.createLinearGradient(pos.x - 25, pos.y - 25, pos.x + 25, pos.y + 25);
-                gradient.addColorStop(0, '#667eea');
-                gradient.addColorStop(1, '#764ba2');
-                ctx.fillStyle = gradient;
+                ctx.fillStyle = '#38bdf8';
                 ctx.fill();
-                
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 14px Segoe UI';
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '500 14px "IBM Plex Mono", monospace';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(label, pos.x, pos.y);
@@ -2073,7 +2030,7 @@
         function renderTrie() {
             const container = document.getElementById('trieContainer');
             if (trieWords.length === 0) {
-                container.innerHTML = '<p style="color: #888;">Trie is empty</p>';
+                container.innerHTML = '<p style="color: var(--text-tertiary);">Trie is empty</p>';
                 return;
             }
             container.innerHTML = trieWords.map(word => 
@@ -2162,6 +2119,12 @@
         window.onresize = function() {
             renderGraph();
         };
+
+        // Redraw the graph canvas when the theme changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggle = document.getElementById('themeToggle');
+            if (toggle) toggle.addEventListener('click', () => setTimeout(renderGraph, 0));
+        });
     </script>
 </body>
 </html>

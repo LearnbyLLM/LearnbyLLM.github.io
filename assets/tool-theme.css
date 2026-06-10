@@ -1,0 +1,298 @@
+/* LearnbyLLM shared design system for tool pages.
+   Pages keep their own component styles but must use these variables
+   for all colors and the shared topbar/header patterns below. */
+
+:root,
+[data-theme="dark"] {
+  --bg: #0a0a0c;
+  --bg-elevated: #121216;
+  --bg-hover: #18181c;
+  --border: #232329;
+  --border-strong: #3a3a42;
+  --text: #ededf0;
+  --text-secondary: #9b9ba4;
+  --text-tertiary: #62626c;
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.09);
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+}
+
+[data-theme="light"] {
+  --bg: #fbfbfa;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f3f3f1;
+  --border: #e6e6e2;
+  --border-strong: #cfcfc9;
+  --text: #1a1a1c;
+  --text-secondary: #57575e;
+  --text-tertiary: #9a9aa0;
+  --accent: #0284c7;
+  --accent-soft: rgba(2, 132, 199, 0.07);
+  --ok: #059669;
+  --warn: #d97706;
+  --bad: #dc2626;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+body {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 0.25s ease, color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', 'Consolas', monospace;
+}
+
+/* ---------- shared topbar ---------- */
+.site-topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 26px 24px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.wordmark {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.wordmark::before {
+  content: '~/';
+  color: var(--text-tertiary);
+}
+
+.wordmark::after {
+  content: '_';
+  color: var(--accent);
+  animation: wordmark-blink 1.2s steps(1) infinite;
+}
+
+@keyframes wordmark-blink {
+  50% { opacity: 0; }
+}
+
+.theme-toggle {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+}
+
+/* ---------- shared tool header ---------- */
+.tool-header {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+}
+
+.tool-kicker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.tool-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 12px;
+  max-width: 640px;
+}
+
+.tool-header .tool-sub {
+  color: var(--text-secondary);
+  font-size: 0.96rem;
+  line-height: 1.65;
+  max-width: 560px;
+}
+
+/* ---------- shared tab navigation ---------- */
+.nav-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  padding: 0 24px 14px;
+  max-width: 1040px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border-strong);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  padding-top: 12px;
+}
+
+.nav-tab {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 2px 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease;
+}
+
+.nav-tab:hover {
+  color: var(--text);
+}
+
+.nav-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- shared card ---------- */
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  margin-bottom: 22px;
+}
+
+.card h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 14px;
+}
+
+.card h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin: 22px 0 10px;
+}
+
+.card p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.card strong {
+  color: var(--text);
+}
+
+.card code {
+  font-family: 'IBM Plex Mono', monospace;
+  background: var(--accent-soft);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.88em;
+  color: var(--accent);
+}
+
+/* ---------- shared buttons ---------- */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.action-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 9px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn:hover,
+.btn-secondary:hover {
+  color: var(--text);
+  border-color: var(--text-tertiary);
+}
+
+.btn-primary,
+.action-btn {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-primary:hover,
+.action-btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-danger {
+  border-color: var(--bad);
+  color: var(--bad);
+  background: transparent;
+}
+
+.btn-danger:hover {
+  background: var(--bad);
+  color: var(--bg);
+}
+
+/* ---------- shared inputs ---------- */
+.text-input,
+input[type="text"].themed,
+select.themed {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+  padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.text-input:focus,
+input[type="text"].themed:focus {
+  border-color: var(--accent);
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+}

@@ -12,108 +12,21 @@
     <meta property="og:image" content="https://learnbyllm.github.io/assets/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/tool-theme.css">
+    <script src="../assets/theme.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-            min-height: 100vh;
-            color: #fff;
-            overflow-x: hidden;
-        }
-
-        .header {
-            text-align: center;
-            padding: 40px 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
-            animation: pulse 10s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 0.8; }
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf, #f093fb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header p {
-            color: #a0a0a0;
-            font-size: 1.2rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .nav-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.4);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-
-        .nav-tab {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-
-        .nav-tab:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .nav-tab.active {
-            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
-        }
-
         .container {
-            max-width: 1100px;
+            max-width: 1040px;
             margin: 0 auto;
-            padding: 30px;
+            padding: 24px;
         }
 
         .section {
             display: none;
-            animation: fadeIn 0.5s ease;
+            animation: fadeIn 0.4s ease;
         }
 
         .section.active {
@@ -121,71 +34,22 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 25px;
-        }
-
-        .card h2 {
-            color: #00d4ff;
-            margin-bottom: 15px;
-            font-size: 1.6rem;
-        }
-
-        .card h3 {
-            color: #f093fb;
-            margin: 20px 0 10px;
-            font-size: 1.15rem;
-        }
-
-        .card p {
-            color: #c0c0c0;
-            line-height: 1.7;
-            margin-bottom: 12px;
-        }
-
-        .card strong { color: #fff; }
-        .card code {
-            background: rgba(0, 212, 255, 0.12);
-            border-radius: 5px;
-            padding: 2px 7px;
-            font-size: 0.9em;
-            color: #7dd8f0;
-        }
-
         .disclaimer {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            border-radius: 10px;
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            border-radius: 8px;
             padding: 12px 18px;
-            color: #fbbf24;
-            font-size: 0.9rem;
-            margin-bottom: 25px;
+            color: var(--warn);
+            font-size: 0.86rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
         }
 
-        .text-input {
-            width: 100%;
-            padding: 14px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            font-size: 1.05rem;
-            outline: none;
-            transition: border-color 0.3s ease;
-            margin-bottom: 20px;
-        }
-
-        .text-input:focus {
-            border-color: #00d4ff;
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        .disclaimer strong, .disclaimer em {
+            color: inherit;
         }
 
         .token-row {
@@ -197,27 +61,33 @@
 
         .token-chip {
             padding: 8px 14px;
-            border-radius: 10px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.95rem;
-            border: 1px solid transparent;
+            border-radius: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.92rem;
+            color: var(--text);
+            border: 1px solid var(--border);
             cursor: default;
             transition: all 0.2s ease;
         }
 
         .token-chip .token-id {
             display: block;
-            font-size: 0.65rem;
-            opacity: 0.7;
+            font-size: 0.64rem;
+            color: var(--text-secondary);
             margin-top: 2px;
             text-align: center;
         }
 
         .token-chip.clickable { cursor: pointer; }
         .token-chip.selected {
-            border-color: #fff;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.35);
-            transform: translateY(-2px);
+            border-color: var(--accent);
+            outline: 1px solid var(--accent);
+        }
+
+        .hint {
+            color: var(--text-tertiary);
+            font-size: 0.84rem;
+            font-family: 'IBM Plex Mono', monospace;
         }
 
         .embedding-grid {
@@ -236,9 +106,9 @@
 
         .embedding-label {
             min-width: 90px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.85rem;
-            color: #7dd8f0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
             text-align: right;
         }
 
@@ -256,44 +126,50 @@
             max-width: 560px;
             height: 380px;
             margin: 0 auto;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
         }
 
         .scatter-point {
             position: absolute;
             transform: translate(-50%, -50%);
             padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 0.85rem;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text);
             white-space: nowrap;
         }
 
         .controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
             margin-bottom: 20px;
         }
 
         .head-btn {
-            padding: 9px 18px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.06);
-            color: #ccc;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 8px 16px;
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
             cursor: pointer;
-            font-size: 0.88rem;
-            transition: all 0.25s ease;
+            transition: all 0.15s ease;
         }
 
+        .head-btn:hover { color: var(--text); }
+
         .head-btn.active {
-            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-            color: #fff;
-            border-color: transparent;
-            font-weight: 600;
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         .attn-matrix {
@@ -302,9 +178,9 @@
         }
 
         .attn-matrix th {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.75rem;
-            color: #888;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
             padding: 4px 6px;
             font-weight: normal;
             max-width: 70px;
@@ -317,10 +193,11 @@
         .attn-matrix td {
             width: 38px;
             height: 38px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
             text-align: center;
-            font-size: 0.62rem;
-            color: rgba(255, 255, 255, 0.85);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text);
         }
 
         .matrix-scroll { overflow-x: auto; padding-bottom: 10px; }
@@ -332,13 +209,19 @@
             margin: 18px 0;
         }
 
-        .slider-row label { color: #c0c0c0; min-width: 130px; }
-        .slider-row input[type="range"] { flex: 1; accent-color: #00d4ff; }
+        .slider-row label {
+            color: var(--text-secondary);
+            min-width: 130px;
+            font-size: 0.9rem;
+        }
+
+        .slider-row input[type="range"] { flex: 1; }
+
         .slider-value {
             min-width: 50px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            color: #00d4ff;
-            font-weight: bold;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--accent);
+            font-weight: 500;
         }
 
         .prob-bars { display: flex; flex-direction: column; gap: 10px; }
@@ -352,63 +235,50 @@
         .prob-token {
             min-width: 90px;
             text-align: right;
-            font-family: 'Consolas', 'Monaco', monospace;
-            color: #7dd8f0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
         }
 
         .prob-track {
             flex: 1;
             height: 26px;
-            background: rgba(0, 0, 0, 0.3);
+            background: var(--bg);
+            border: 1px solid var(--border);
             border-radius: 6px;
             overflow: hidden;
         }
 
         .prob-fill {
             height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
-            border-radius: 6px;
+            background: var(--accent);
             transition: width 0.4s ease;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             padding-right: 8px;
-            font-size: 0.75rem;
-            font-weight: bold;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--bg);
             min-width: 2px;
         }
 
-        .action-btn {
-            padding: 12px 28px;
-            border: none;
-            border-radius: 25px;
-            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0, 212, 255, 0.4);
-        }
-
         .generated-text {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 1.1rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
             line-height: 1.8;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 20px;
             margin-top: 15px;
             min-height: 60px;
         }
 
         .generated-text .new-token {
-            color: #00d4ff;
-            background: rgba(0, 212, 255, 0.12);
+            color: var(--accent);
+            background: var(--accent-soft);
             border-radius: 4px;
             padding: 1px 3px;
         }
@@ -425,68 +295,64 @@
             width: 100%;
             max-width: 520px;
             padding: 16px 22px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
             text-align: center;
         }
 
-        .pipeline-stage strong { display: block; margin-bottom: 4px; }
-        .pipeline-stage span { color: #999; font-size: 0.85rem; }
+        .pipeline-stage strong { display: block; margin-bottom: 4px; color: var(--text); }
+        .pipeline-stage span { color: var(--text-tertiary); font-size: 0.84rem; }
 
         .pipeline-stage.highlight {
-            border-color: rgba(0, 212, 255, 0.5);
-            background: rgba(0, 212, 255, 0.07);
+            border-color: var(--accent);
+            background: var(--accent-soft);
         }
 
         .pipeline-arrow {
-            color: #00d4ff;
-            font-size: 1.4rem;
+            color: var(--text-tertiary);
+            font-size: 1.2rem;
             padding: 6px 0;
         }
 
         .layer-stack-note {
-            font-size: 0.85rem;
-            color: #f093fb;
-            padding: 4px 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--accent);
+            padding: 6px 0;
         }
-
-        .back-link {
-            display: inline-block;
-            margin: 20px 30px 0;
-            color: #00d4ff;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .back-link:hover { text-decoration: underline; }
 
         @media (max-width: 600px) {
-            .header h1 { font-size: 2rem; }
-            .container { padding: 18px; }
+            .container { padding: 16px; }
             .card { padding: 20px; }
-            .embedding-label, .prob-token { min-width: 70px; font-size: 0.75rem; }
+            .embedding-label, .prob-token { min-width: 70px; font-size: 0.72rem; }
         }
     </style>
 </head>
 <body>
-    <a href="../index.html" class="back-link">← All Learning Tools</a>
-    <div class="header">
-        <h1>🔬 Transformer Explorer</h1>
-        <p>Step inside the architecture behind modern language models</p>
-    </div>
+    <nav class="site-topbar">
+        <a href="../index.html" class="wordmark">learnbyllm</a>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">[theme]</button>
+    </nav>
+
+    <header class="tool-header">
+        <p class="tool-kicker">interactive · ai</p>
+        <h1>Transformer Explorer</h1>
+        <p class="tool-sub">Step inside the architecture behind modern language models — from raw text
+            to next-token probabilities, one stage at a time.</p>
+    </header>
 
     <div class="nav-tabs">
-        <button class="nav-tab active" data-section="tokens">1. Tokenization</button>
-        <button class="nav-tab" data-section="embeddings">2. Embeddings</button>
-        <button class="nav-tab" data-section="attention">3. Attention</button>
-        <button class="nav-tab" data-section="layers">4. Stacking Layers</button>
-        <button class="nav-tab" data-section="prediction">5. Next-Token Prediction</button>
+        <button class="nav-tab active" data-section="tokens">1 · Tokenization</button>
+        <button class="nav-tab" data-section="embeddings">2 · Embeddings</button>
+        <button class="nav-tab" data-section="attention">3 · Attention</button>
+        <button class="nav-tab" data-section="layers">4 · Stacking Layers</button>
+        <button class="nav-tab" data-section="prediction">5 · Prediction</button>
     </div>
 
     <div class="container">
         <div class="disclaimer">
-            ⚠️ The numbers in this tool are <strong>illustrative</strong>, computed with toy rules in your browser —
+            The numbers in this tool are <strong>illustrative</strong>, computed with toy rules in your browser —
             not weights from a real trained model. The <em>mechanisms</em> are what real transformers do; the
             specific values are not.
         </div>
@@ -499,10 +365,10 @@
                 that chops text into pieces from a fixed vocabulary — often whole common words, but rarer words get
                 split into <strong>subword</strong> chunks. Each piece maps to an integer ID.</p>
                 <p>Type a sentence and watch it get tokenized:</p>
-                <input type="text" class="text-input" id="tokenInput"
+                <input type="text" class="text-input" id="tokenInput" style="width: 100%; margin-bottom: 20px;"
                        value="The robot was unbelievably quickly learning" autocomplete="off">
                 <div class="token-row" id="tokenOutput"></div>
-                <p id="tokenCount" style="color: #888; font-size: 0.9rem;"></p>
+                <p id="tokenCount" class="hint"></p>
                 <h3>Why subwords?</h3>
                 <p>With ~50,000–200,000 subword pieces, a model can spell out <em>any</em> text — including words it
                 has never seen — while keeping common words as single efficient tokens. Try typing a made-up word like
@@ -555,8 +421,8 @@
                 <div class="matrix-scroll">
                     <table class="attn-matrix" id="attnMatrix"></table>
                 </div>
-                <p style="margin-top: 15px; color: #888; font-size: 0.9rem;">
-                    Sentence comes from the Tokenization tab — change it there and come back.</p>
+                <p class="hint" style="margin-top: 15px;">
+                    sentence comes from the tokenization tab — change it there and come back</p>
             </div>
         </div>
 
@@ -568,17 +434,17 @@
                 followed by a small neural network called an <strong>MLP</strong> applied to each token separately
                 (each token "thinks about" what it just gathered). That block is repeated dozens of times:</p>
                 <div class="pipeline">
-                    <div class="pipeline-stage"><strong>📝 Input tokens</strong><span>"The robot was learning…"</span></div>
+                    <div class="pipeline-stage"><strong>Input tokens</strong><span>"The robot was learning…"</span></div>
                     <div class="pipeline-arrow">↓</div>
-                    <div class="pipeline-stage"><strong>🎨 Embeddings + positions</strong><span>each token → vector, plus "where am I in the sentence"</span></div>
+                    <div class="pipeline-stage"><strong>Embeddings + positions</strong><span>each token → vector, plus "where am I in the sentence"</span></div>
                     <div class="pipeline-arrow">↓</div>
-                    <div class="pipeline-stage highlight"><strong>👀 Attention</strong><span>tokens look at earlier tokens and blend information</span></div>
+                    <div class="pipeline-stage highlight"><strong>Attention</strong><span>tokens look at earlier tokens and blend information</span></div>
                     <div class="pipeline-arrow">↓</div>
-                    <div class="pipeline-stage highlight"><strong>🧮 MLP</strong><span>each token processes what it gathered</span></div>
+                    <div class="pipeline-stage highlight"><strong>MLP</strong><span>each token processes what it gathered</span></div>
                     <div class="pipeline-arrow layer-stack-note">↻ repeat this block 30–100+ times</div>
-                    <div class="pipeline-stage"><strong>🎯 Output layer</strong><span>final vector → score for every token in the vocabulary</span></div>
+                    <div class="pipeline-stage"><strong>Output layer</strong><span>final vector → score for every token in the vocabulary</span></div>
                     <div class="pipeline-arrow">↓</div>
-                    <div class="pipeline-stage"><strong>🎲 Probabilities</strong><span>softmax turns scores into a probability for each next token</span></div>
+                    <div class="pipeline-stage"><strong>Probabilities</strong><span>softmax turns scores into a probability for each next token</span></div>
                 </div>
                 <h3>Why does depth matter?</h3>
                 <p>Early layers tend to capture grammar and local structure; middle layers build up facts and
@@ -608,8 +474,8 @@
                 unlikely tokens get a real chance. Creative, sometimes incoherent.</p>
                 <h3>Try sampling</h3>
                 <p>Click to sample the next token from the distribution above, append it, and predict again:</p>
-                <button class="action-btn" id="sampleBtn">🎲 Sample next token</button>
-                <button class="action-btn" id="resetBtn" style="background: rgba(255,255,255,0.1); margin-left: 10px;">Reset</button>
+                <button class="action-btn" id="sampleBtn">Sample next token</button>
+                <button class="btn-secondary" id="resetBtn" style="margin-left: 8px;">Reset</button>
                 <div class="generated-text" id="generatedText"></div>
             </div>
         </div>
@@ -638,7 +504,11 @@
             return Array.from({ length: dims }, (_, i) => seededValue(seed, i));
         }
 
-        const TOKEN_COLORS = ['#1e3a5f', '#3b2a5f', '#1f4a44', '#5f2a3e', '#4a3a1f', '#2a4a5f'];
+        // Transparent tints readable on both light and dark backgrounds
+        const TOKEN_COLORS = [
+            'rgba(56, 189, 248, 0.16)', 'rgba(167, 139, 250, 0.16)', 'rgba(52, 211, 153, 0.16)',
+            'rgba(251, 191, 36, 0.16)', 'rgba(248, 113, 113, 0.16)', 'rgba(244, 114, 182, 0.16)'
+        ];
 
         // Toy subword tokenizer: common short words stay whole, longer words
         // split on a small set of prefixes/suffixes, remainder chunked.
@@ -714,12 +584,12 @@
 
         // ---------- 2. embeddings ----------
         function cellColor(v) {
-            // blue (negative) -> dark (zero) -> pink (positive)
+            // blue (negative) -> pink (positive), mid-tones readable on both themes
             const t = (v + 1) / 2;
-            const r = Math.round(20 + t * 220);
-            const g = Math.round(60 + Math.abs(0.5 - t) * -40 + 40);
-            const b = Math.round(240 - t * 90);
-            return `rgb(${r}, ${Math.max(20, g)}, ${b})`;
+            const r = Math.round(56 + t * 188);
+            const g = Math.round(140 - t * 40);
+            const b = Math.round(248 - t * 70);
+            return `rgb(${r}, ${g}, ${b})`;
         }
 
         function renderEmbeddings() {
@@ -736,23 +606,24 @@
             }).join('');
         }
 
-        // Hand-placed 2D "embedding space" map (illustrative)
+        // Hand-placed 2D "embedding space" map (illustrative).
+        // Hues mark clusters; text/border colors come from the theme.
         const SCATTER = [
-            { word: 'cat', x: 18, y: 22, c: '#00d4ff' }, { word: 'dog', x: 28, y: 18, c: '#00d4ff' },
-            { word: 'puppy', x: 33, y: 26, c: '#00d4ff' }, { word: 'kitten', x: 14, y: 30, c: '#00d4ff' },
-            { word: 'run', x: 70, y: 15, c: '#f093fb' }, { word: 'walk', x: 78, y: 20, c: '#f093fb' },
-            { word: 'sprint', x: 66, y: 23, c: '#f093fb' },
-            { word: 'man', x: 22, y: 68, c: '#fbbf24' }, { word: 'woman', x: 38, y: 60, c: '#fbbf24' },
-            { word: 'king', x: 24, y: 86, c: '#fbbf24' }, { word: 'queen', x: 40, y: 78, c: '#fbbf24' },
-            { word: 'paris', x: 76, y: 64, c: '#34d399' }, { word: 'london', x: 84, y: 70, c: '#34d399' },
-            { word: 'tokyo', x: 70, y: 74, c: '#34d399' }, { word: 'france', x: 80, y: 84, c: '#34d399' },
+            { word: 'cat', x: 18, y: 22, c: '56, 189, 248' }, { word: 'dog', x: 28, y: 18, c: '56, 189, 248' },
+            { word: 'puppy', x: 33, y: 26, c: '56, 189, 248' }, { word: 'kitten', x: 14, y: 30, c: '56, 189, 248' },
+            { word: 'run', x: 70, y: 15, c: '244, 114, 182' }, { word: 'walk', x: 78, y: 20, c: '244, 114, 182' },
+            { word: 'sprint', x: 66, y: 23, c: '244, 114, 182' },
+            { word: 'man', x: 22, y: 68, c: '251, 191, 36' }, { word: 'woman', x: 38, y: 60, c: '251, 191, 36' },
+            { word: 'king', x: 24, y: 86, c: '251, 191, 36' }, { word: 'queen', x: 40, y: 78, c: '251, 191, 36' },
+            { word: 'paris', x: 76, y: 64, c: '52, 211, 153' }, { word: 'london', x: 84, y: 70, c: '52, 211, 153' },
+            { word: 'tokyo', x: 70, y: 74, c: '52, 211, 153' }, { word: 'france', x: 80, y: 84, c: '52, 211, 153' },
         ];
 
         function renderScatter() {
             const box = document.getElementById('scatterBox');
             box.innerHTML = SCATTER.map(p => `
                 <span class="scatter-point" style="left: ${p.x}%; top: ${p.y}%;
-                    background: ${p.c}22; border: 1px solid ${p.c}; color: ${p.c};">${p.word}</span>`).join('');
+                    background: rgba(${p.c}, 0.14); border: 1px solid rgba(${p.c}, 0.55);">${p.word}</span>`).join('');
         }
 
         // ---------- 3. attention ----------
@@ -791,10 +662,10 @@
             const chipRow = document.getElementById('attnTokens');
             chipRow.innerHTML = tokens.map((t, i) => {
                 const w = i <= selectedToken ? weights[i] : 0;
-                const glow = Math.min(1, w * 2.2);
+                const tint = Math.min(0.5, w * 1.1);
                 return `<span class="token-chip clickable${i === selectedToken ? ' selected' : ''}"
                     data-idx="${i}"
-                    style="background: rgba(0, 212, 255, ${0.06 + glow * 0.55});
+                    style="background: rgba(56, 189, 248, ${(0.04 + tint).toFixed(3)});
                            opacity: ${i > selectedToken ? 0.35 : 1};">
                     ${t}<span class="token-id">${i <= selectedToken ? (w * 100).toFixed(0) + '%' : '—'}</span>
                 </span>`;
@@ -813,9 +684,9 @@
                 const row = attentionRow(activeHead, i, tokens);
                 html += `<tr><th class="row-label">${tokens[i]}</th>`;
                 for (let j = 0; j < tokens.length; j++) {
-                    if (j > i) { html += '<td style="background: transparent;"></td>'; continue; }
+                    if (j > i) { html += '<td style="background: transparent; border-color: transparent;"></td>'; continue; }
                     const w = row[j];
-                    html += `<td style="background: rgba(0, 212, 255, ${(w * 0.9).toFixed(3)});"
+                    html += `<td style="background: rgba(56, 189, 248, ${(w * 0.75).toFixed(3)});"
                         title="${tokens[i]} → ${tokens[j]}: ${(w * 100).toFixed(1)}%">${(w * 100).toFixed(0)}</td>`;
                 }
                 html += '</tr>';

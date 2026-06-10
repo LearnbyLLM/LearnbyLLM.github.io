@@ -12,99 +12,16 @@
     <meta property="og:image" content="https://learnbyllm.github.io/assets/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/tool-theme.css">
+    <script src="../assets/theme.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
-            min-height: 100vh;
-            color: #e6edf3;
-            overflow-x: hidden;
-        }
-
-        .header {
-            text-align: center;
-            padding: 50px 20px;
-            background: linear-gradient(180deg, rgba(56, 139, 253, 0.1) 0%, transparent 100%);
-            border-bottom: 1px solid #30363d;
-            position: relative;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 600px;
-            height: 300px;
-            background: radial-gradient(ellipse, rgba(56, 139, 253, 0.15) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            background: linear-gradient(90deg, #58a6ff, #bf91f7, #f778ba);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            position: relative;
-        }
-
-        .header p {
-            color: #8b949e;
-            font-size: 1.2rem;
-            position: relative;
-        }
-
-        .nav-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            padding: 20px;
-            background: rgba(22, 27, 34, 0.8);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid #30363d;
-        }
-
-        .nav-tab {
-            padding: 10px 20px;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            background: transparent;
-            color: #8b949e;
-        }
-
-        .nav-tab:hover {
-            background: #21262d;
-            color: #e6edf3;
-            border-color: #8b949e;
-        }
-
-        .nav-tab.active {
-            background: linear-gradient(135deg, #238636, #2ea043);
-            border-color: #238636;
-            color: #fff;
-        }
-
         .container {
-            max-width: 1200px;
+            max-width: 1040px;
             margin: 0 auto;
-            padding: 30px;
+            padding: 10px 24px 60px;
         }
 
         .section {
@@ -121,133 +38,87 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .card {
-            background: #161b22;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 25px;
-            border: 1px solid #30363d;
-        }
-
-        .card h2 {
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            color: #58a6ff;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .card h3 {
-            font-size: 1.2rem;
-            margin: 25px 0 12px;
-            color: #bf91f7;
-        }
-
         .description {
-            color: #8b949e;
-            line-height: 1.8;
+            color: var(--text-secondary);
+            line-height: 1.75;
             margin-bottom: 20px;
-            font-size: 1.05rem;
+            font-size: 1rem;
         }
 
         .interactive-area {
-            background: #0d1117;
+            background: var(--bg);
             border-radius: 10px;
             padding: 25px;
             margin: 20px 0;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
         }
 
         .info-box {
-            background: rgba(56, 139, 253, 0.1);
-            border-left: 4px solid #58a6ff;
+            background: var(--accent-soft);
+            border-left: 3px solid var(--accent);
             padding: 15px 20px;
             border-radius: 0 8px 8px 0;
             margin: 15px 0;
         }
 
         .info-box.warning {
-            background: rgba(210, 153, 34, 0.1);
-            border-left-color: #d29922;
+            background: color-mix(in srgb, var(--warn) 9%, transparent);
+            border-left-color: var(--warn);
         }
 
         .info-box.success {
-            background: rgba(46, 160, 67, 0.1);
-            border-left-color: #2ea043;
+            background: color-mix(in srgb, var(--ok) 9%, transparent);
+            border-left-color: var(--ok);
         }
 
         .info-box.danger {
-            background: rgba(248, 81, 73, 0.1);
-            border-left-color: #f85149;
+            background: color-mix(in srgb, var(--bad) 9%, transparent);
+            border-left-color: var(--bad);
         }
 
         .info-box h4 {
-            color: #58a6ff;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent);
             margin-bottom: 8px;
         }
 
-        .info-box.warning h4 { color: #d29922; }
-        .info-box.success h4 { color: #2ea043; }
-        .info-box.danger h4 { color: #f85149; }
+        .info-box.warning h4 { color: var(--warn); }
+        .info-box.success h4 { color: var(--ok); }
+        .info-box.danger h4 { color: var(--bad); }
 
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-            background: #238636;
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: #2ea043;
-        }
-
-        .btn-secondary {
-            background: #21262d;
-            color: #e6edf3;
-            border: 1px solid #30363d;
-        }
-
-        .btn-secondary:hover {
-            background: #30363d;
-        }
-
-        .btn-danger {
-            background: #da3633;
-            color: #fff;
-        }
-
-        .btn-danger:hover {
-            background: #f85149;
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         input, textarea {
-            padding: 12px 16px;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            background: #0d1117;
-            color: #e6edf3;
-            font-size: 1rem;
-            font-family: inherit;
+            padding: 10px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.92rem;
+            font-family: 'IBM Plex Mono', monospace;
             width: 100%;
             transition: border-color 0.2s;
         }
 
+        input[type="range"] {
+            border: none;
+            background: transparent;
+            padding: 0;
+        }
+
         input:focus, textarea:focus {
             outline: none;
-            border-color: #58a6ff;
+            border-color: var(--accent);
         }
 
         input::placeholder, textarea::placeholder {
-            color: #484f58;
+            color: var(--text-tertiary);
         }
 
         /* Hash Visualization */
@@ -268,11 +139,11 @@
         }
 
         .hash-output {
-            background: #0d1117;
-            border: 1px solid #30363d;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 20px;
-            font-family: 'Consolas', 'Monaco', monospace;
+            font-family: 'IBM Plex Mono', monospace;
             word-break: break-all;
             position: relative;
         }
@@ -281,16 +152,19 @@
             position: absolute;
             top: -10px;
             left: 15px;
-            background: #161b22;
+            background: var(--bg-elevated);
             padding: 0 8px;
-            font-size: 0.8rem;
-            color: #8b949e;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
         }
 
         .hash-value {
-            color: #7ee787;
-            font-size: 1.1rem;
-            letter-spacing: 1px;
+            color: var(--ok);
+            font-size: 1rem;
+            letter-spacing: 0.5px;
         }
 
         .hash-comparison {
@@ -301,39 +175,37 @@
         }
 
         .hash-compare-box {
-            background: #0d1117;
+            background: var(--bg-elevated);
             border-radius: 8px;
             padding: 15px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
         }
 
         .hash-compare-box.match {
-            border-color: #2ea043;
+            border-color: var(--ok);
         }
 
         .hash-compare-box.no-match {
-            border-color: #f85149;
+            border-color: var(--bad);
         }
 
         /* Block Visualization */
         .block {
-            background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
-            border: 2px solid #30363d;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-strong);
             border-radius: 12px;
             padding: 20px;
             margin: 15px 0;
             position: relative;
-            transition: all 0.3s ease;
+            transition: border-color 0.3s ease;
         }
 
         .block.valid {
-            border-color: #2ea043;
-            box-shadow: 0 0 20px rgba(46, 160, 67, 0.2);
+            border-color: var(--ok);
         }
 
         .block.invalid {
-            border-color: #f85149;
-            box-shadow: 0 0 20px rgba(248, 81, 73, 0.2);
+            border-color: var(--bad);
             animation: shake 0.5s ease;
         }
 
@@ -349,30 +221,34 @@
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 15px;
-            border-bottom: 1px solid #30363d;
+            border-bottom: 1px solid var(--border);
         }
 
         .block-number {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #58a6ff;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--accent);
         }
 
         .block-status {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-family: 'IBM Plex Mono', monospace;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
         .block-status.valid {
-            background: rgba(46, 160, 67, 0.2);
-            color: #2ea043;
+            background: color-mix(in srgb, var(--ok) 12%, transparent);
+            color: var(--ok);
         }
 
         .block-status.invalid {
-            background: rgba(248, 81, 73, 0.2);
-            color: #f85149;
+            background: color-mix(in srgb, var(--bad) 12%, transparent);
+            color: var(--bad);
         }
 
         .block-field {
@@ -381,28 +257,41 @@
 
         .block-field label {
             display: block;
-            font-size: 0.85rem;
-            color: #8b949e;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
             margin-bottom: 5px;
         }
 
         .block-field input {
-            font-family: 'Consolas', monospace;
+            font-family: 'IBM Plex Mono', monospace;
         }
 
         .block-field .hash-display {
-            background: #0d1117;
+            background: var(--bg);
             padding: 10px 15px;
             border-radius: 6px;
-            font-family: 'Consolas', monospace;
-            font-size: 0.9rem;
-            color: #7ee787;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.88rem;
+            color: var(--ok);
             word-break: break-all;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
         }
 
-        .block-field .hash-display.prev-hash {
-            color: #f778ba;
+        .hash-display.prev-hash,
+        .mini-hash.prev,
+        .merkle-node.leaf,
+        .code-block .function {
+            color: #a78bfa;
+        }
+
+        [data-theme="light"] .hash-display.prev-hash,
+        [data-theme="light"] .mini-hash.prev,
+        [data-theme="light"] .merkle-node.leaf,
+        [data-theme="light"] .code-block .function {
+            color: #7c3aed;
         }
 
         /* Chain Visualization */
@@ -416,49 +305,45 @@
 
         .chain-block {
             min-width: 200px;
-            background: #21262d;
-            border: 2px solid #30363d;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-strong);
             border-radius: 10px;
             padding: 15px;
             flex-shrink: 0;
-            transition: all 0.3s ease;
+            transition: border-color 0.3s ease;
         }
 
         .chain-block.valid {
-            border-color: #2ea043;
+            border-color: var(--ok);
         }
 
         .chain-block.invalid {
-            border-color: #f85149;
+            border-color: var(--bad);
         }
 
         .chain-block.genesis {
-            border-color: #58a6ff;
-            background: linear-gradient(135deg, rgba(56, 139, 253, 0.1), #21262d);
+            border-color: var(--accent);
+            background: var(--accent-soft);
         }
 
         .chain-link {
             font-size: 2rem;
-            color: #30363d;
+            color: var(--border-strong);
         }
 
         .chain-link.valid {
-            color: #2ea043;
+            color: var(--ok);
         }
 
         .chain-link.invalid {
-            color: #f85149;
+            color: var(--bad);
         }
 
         .mini-hash {
-            font-family: 'Consolas', monospace;
+            font-family: 'IBM Plex Mono', monospace;
             font-size: 0.75rem;
-            color: #7ee787;
+            color: var(--ok);
             word-break: break-all;
-        }
-
-        .mini-hash.prev {
-            color: #f778ba;
         }
 
         /* Mining Visualization */
@@ -474,50 +359,53 @@
         }
 
         .mining-stat {
-            background: #0d1117;
+            background: var(--bg-elevated);
             border-radius: 8px;
             padding: 15px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
         }
 
         .mining-stat-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #58a6ff;
-            font-family: 'Consolas', monospace;
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: var(--accent);
+            font-family: 'IBM Plex Mono', monospace;
         }
 
         .mining-stat-label {
-            font-size: 0.85rem;
-            color: #8b949e;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
             margin-top: 5px;
         }
 
         .nonce-display {
-            font-family: 'Consolas', monospace;
+            font-family: 'IBM Plex Mono', monospace;
             font-size: 2rem;
-            color: #d29922;
+            color: var(--warn);
             margin: 20px 0;
         }
 
         .mining-hash {
-            font-family: 'Consolas', monospace;
-            font-size: 1rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.95rem;
             padding: 15px;
-            background: #0d1117;
+            background: var(--bg-elevated);
             border-radius: 8px;
             margin: 15px 0;
             word-break: break-all;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
         }
 
         .mining-hash .leading-zeros {
-            color: #2ea043;
-            font-weight: bold;
+            color: var(--ok);
+            font-weight: 600;
         }
 
         .mining-hash .rest {
-            color: #8b949e;
+            color: var(--text-secondary);
         }
 
         .difficulty-slider {
@@ -527,8 +415,8 @@
 
         /* Transaction Visualization */
         .transaction {
-            background: #0d1117;
-            border: 1px solid #30363d;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 15px;
             margin: 10px 0;
@@ -546,28 +434,29 @@
         }
 
         .tx-amount {
-            font-weight: bold;
-            color: #7ee787;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+            color: var(--ok);
         }
 
         .tx-parties {
             font-size: 0.9rem;
-            color: #8b949e;
+            color: var(--text-secondary);
         }
 
         .tx-hash {
-            font-family: 'Consolas', monospace;
+            font-family: 'IBM Plex Mono', monospace;
             font-size: 0.75rem;
-            color: #58a6ff;
+            color: var(--accent);
         }
 
         /* Network Visualization */
         .network-container {
             position: relative;
             height: 400px;
-            background: #0d1117;
+            background: var(--bg-elevated);
             border-radius: 10px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
             overflow: hidden;
         }
 
@@ -575,35 +464,34 @@
             position: absolute;
             width: 80px;
             height: 80px;
-            background: #21262d;
-            border: 2px solid #30363d;
-            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: border-color 0.3s ease, transform 0.3s ease;
         }
 
         .node:hover {
             transform: scale(1.1);
-            border-color: #58a6ff;
+            border-color: var(--accent);
         }
 
         .node.synced {
-            border-color: #2ea043;
-            box-shadow: 0 0 15px rgba(46, 160, 67, 0.3);
+            border-color: var(--ok);
         }
 
         .node.syncing {
-            border-color: #d29922;
+            border-color: var(--warn);
             animation: pulse 1s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(210, 153, 34, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(210, 153, 34, 0); }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
         }
 
         .node-icon {
@@ -611,8 +499,9 @@
         }
 
         .node-label {
-            font-size: 0.7rem;
-            color: #8b949e;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--text-secondary);
             margin-top: 3px;
         }
 
@@ -625,14 +514,16 @@
         }
 
         .comparison-item {
-            background: #0d1117;
+            background: var(--bg);
             border-radius: 10px;
             padding: 20px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
         }
 
         .comparison-item h4 {
-            color: #bf91f7;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-weight: 600;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -640,7 +531,7 @@
         }
 
         .comparison-item p {
-            color: #8b949e;
+            color: var(--text-secondary);
             font-size: 0.95rem;
             line-height: 1.6;
         }
@@ -678,24 +569,20 @@
         }
 
         .merkle-node {
-            background: #21262d;
-            border: 1px solid #30363d;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 10px 15px;
-            font-family: 'Consolas', monospace;
+            font-family: 'IBM Plex Mono', monospace;
             font-size: 0.75rem;
-            color: #7ee787;
+            color: var(--ok);
             text-align: center;
             min-width: 100px;
         }
 
         .merkle-node.root {
-            border-color: #58a6ff;
-            background: rgba(56, 139, 253, 0.1);
-        }
-
-        .merkle-node.leaf {
-            color: #f778ba;
+            border-color: var(--accent);
+            background: var(--accent-soft);
         }
 
         /* Stats Display */
@@ -707,54 +594,52 @@
         }
 
         .stat-card {
-            background: #0d1117;
+            background: var(--bg);
             border-radius: 10px;
             padding: 20px;
             text-align: center;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
         }
 
         .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            background: linear-gradient(90deg, #58a6ff, #bf91f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.7rem;
+            font-weight: 500;
+            color: var(--accent);
         }
 
         .stat-label {
-            color: #8b949e;
-            font-size: 0.85rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
             margin-top: 5px;
         }
 
         /* Code Block */
         .code-block {
-            background: #0d1117;
-            border: 1px solid #30363d;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 20px;
-            font-family: 'Consolas', monospace;
-            font-size: 0.9rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.88rem;
+            color: var(--text);
             overflow-x: auto;
             margin: 15px 0;
         }
 
         .code-block .keyword {
-            color: #ff7b72;
+            color: var(--bad);
         }
 
         .code-block .string {
-            color: #a5d6ff;
-        }
-
-        .code-block .function {
-            color: #d2a8ff;
+            color: var(--accent);
         }
 
         .code-block .comment {
-            color: #8b949e;
+            color: var(--text-tertiary);
         }
 
         /* Timeline */
@@ -770,7 +655,7 @@
             top: 0;
             bottom: 0;
             width: 2px;
-            background: #30363d;
+            background: var(--border-strong);
         }
 
         .timeline-item {
@@ -785,38 +670,25 @@
             top: 20px;
             width: 12px;
             height: 12px;
-            border-radius: 50%;
-            background: #58a6ff;
-            border: 2px solid #0d1117;
+            border-radius: 6px;
+            background: var(--accent);
+            border: 2px solid var(--bg-elevated);
         }
 
         .timeline-item h4 {
-            color: #e6edf3;
+            color: var(--text);
             margin-bottom: 5px;
         }
 
         .timeline-item p {
-            color: #8b949e;
+            color: var(--text-secondary);
             font-size: 0.95rem;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .nav-tabs {
-                padding: 10px;
-            }
-
-            .nav-tab {
-                padding: 8px 14px;
-                font-size: 0.85rem;
-            }
-
             .container {
-                padding: 15px;
+                padding: 10px 15px 40px;
             }
 
             .card {
@@ -838,9 +710,12 @@
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>⛓️ Understanding Blockchain</h1>
-        <p>An interactive journey into how blockchain technology works</p>
+    <nav class="site-topbar"><a href="../index.html" class="wordmark">learnbyllm</a><button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">[theme]</button></nav>
+
+    <header class="tool-header">
+        <p class="tool-kicker">interactive · cs fundamentals</p>
+        <h1>Understanding Blockchain</h1>
+        <p class="tool-sub">An interactive journey into how blockchain technology works — hashing, blocks, mining, immutability, and consensus.</p>
     </header>
 
     <nav class="nav-tabs">
@@ -917,8 +792,8 @@
                 <div class="interactive-area">
                     <div class="hash-comparison">
                         <div class="hash-compare-box">
-                            <h4 style="color: #f85149;">❌ Traditional Database</h4>
-                            <ul style="color: #8b949e; margin-top: 10px; padding-left: 20px; line-height: 2;">
+                            <h4 style="color: var(--bad);">❌ Traditional Database</h4>
+                            <ul style="color: var(--text-secondary); margin-top: 10px; padding-left: 20px; line-height: 2;">
                                 <li>Centralized control</li>
                                 <li>Admin can modify/delete records</li>
                                 <li>Single point of failure</li>
@@ -927,8 +802,8 @@
                             </ul>
                         </div>
                         <div class="hash-compare-box">
-                            <h4 style="color: #2ea043;">✅ Blockchain</h4>
-                            <ul style="color: #8b949e; margin-top: 10px; padding-left: 20px; line-height: 2;">
+                            <h4 style="color: var(--ok);">✅ Blockchain</h4>
+                            <ul style="color: var(--text-secondary); margin-top: 10px; padding-left: 20px; line-height: 2;">
                                 <li>Distributed control</li>
                                 <li>Records are immutable</li>
                                 <li>No single point of failure</li>
@@ -981,7 +856,7 @@
                             <div class="hash-value" id="hashOutput">-</div>
                         </div>
                         
-                        <div style="color: #8b949e; font-size: 0.9rem;">
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">
                             <p>✨ Try changing just ONE character and watch the entire hash change!</p>
                         </div>
                     </div>
@@ -1010,7 +885,7 @@
                         <button class="btn-secondary" onclick="showAvalanche('Block 1', 'Block 2')">Block 1 vs Block 2</button>
                         <button class="btn-secondary" onclick="showAvalanche('100 BTC', '100.0 BTC')">100 BTC vs 100.0 BTC</button>
                     </div>
-                    <div id="avalancheDiff" style="margin-top: 15px; color: #8b949e;"></div>
+                    <div id="avalancheDiff" style="margin-top: 15px; color: var(--text-secondary);"></div>
                 </div>
 
                 <h3>🔢 Hash as a Number</h3>
@@ -1042,7 +917,7 @@
 
                 <div class="interactive-area">
                     <h3>🧪 Interactive Block</h3>
-                    <p style="color: #8b949e; margin-bottom: 15px;">Edit the fields and watch how the block's hash changes:</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Edit the fields and watch how the block's hash changes:</p>
                     
                     <div class="block valid" id="singleBlock">
                         <div class="block-header">
@@ -1124,7 +999,7 @@
 
                 <div class="interactive-area">
                     <h3>🧪 Interactive Chain</h3>
-                    <p style="color: #8b949e; margin-bottom: 15px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
                         Click on any block to edit it and see how it breaks the chain!
                     </p>
                     
@@ -1163,7 +1038,7 @@
                 <div class="info-box warning">
                     <h4>⚠️ The Security Implication</h4>
                     <p>To tamper with a transaction from 100 blocks ago, an attacker would need to:</p>
-                    <ol style="margin-top: 10px; padding-left: 20px; line-height: 2; color: #8b949e;">
+                    <ol style="margin-top: 10px; padding-left: 20px; line-height: 2; color: var(--text-secondary);">
                         <li>Change the transaction in block N</li>
                         <li>Recalculate block N's hash</li>
                         <li>Update block N+1's "previous hash" and recalculate its hash</li>
@@ -1253,7 +1128,7 @@
                 <div class="info-box success">
                     <h4>🎁 The Mining Reward</h4>
                     <p>The first miner to find a valid hash gets to add the block and receives:</p>
-                    <ul style="margin-top: 10px; padding-left: 20px; color: #8b949e;">
+                    <ul style="margin-top: 10px; padding-left: 20px; color: var(--text-secondary);">
                         <li><strong>Block Reward:</strong> New coins created (Bitcoin: currently 6.25 BTC)</li>
                         <li><strong>Transaction Fees:</strong> Fees from all transactions in the block</li>
                     </ul>
@@ -1272,7 +1147,7 @@
 
                 <div class="interactive-area">
                     <h3>🧪 Try to Tamper!</h3>
-                    <p style="color: #8b949e; margin-bottom: 20px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
                         This chain has 5 blocks. Try editing Block #2's data and see what happens:
                     </p>
                     
@@ -1315,13 +1190,13 @@
                 <div class="info-box danger">
                     <h4>The Only Way to Cheat</h4>
                     <p>If someone controls more than 50% of the network's computing power, they could theoretically:</p>
-                    <ul style="margin-top: 10px; padding-left: 20px; color: #8b949e;">
+                    <ul style="margin-top: 10px; padding-left: 20px; color: var(--text-secondary);">
                         <li>Double-spend their own coins</li>
                         <li>Prevent transactions from being confirmed</li>
                         <li>Reverse recent transactions</li>
                     </ul>
                     <p style="margin-top: 10px;">However, they still <strong>cannot</strong>:</p>
-                    <ul style="padding-left: 20px; color: #8b949e;">
+                    <ul style="padding-left: 20px; color: var(--text-secondary);">
                         <li>Steal coins from others</li>
                         <li>Create coins out of thin air</li>
                         <li>Change old, deeply-buried transactions</li>
@@ -1342,7 +1217,7 @@
 
                 <div class="interactive-area">
                     <h3>🌐 Network Simulation</h3>
-                    <p style="color: #8b949e; margin-bottom: 15px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
                         Watch how nodes reach consensus. Click "Broadcast Block" to see propagation:
                     </p>
                     
@@ -1355,7 +1230,7 @@
                         <button class="btn-secondary" onclick="resetNetwork()">Reset Network</button>
                     </div>
                     
-                    <div id="networkStatus" style="margin-top: 15px; text-align: center; color: #8b949e;"></div>
+                    <div id="networkStatus" style="margin-top: 15px; text-align: center; color: var(--text-secondary);"></div>
                 </div>
 
                 <h3>⚖️ Consensus Mechanisms</h3>
@@ -1364,29 +1239,29 @@
                         <h4>⛏️ Proof of Work (PoW)</h4>
                         <p><strong>Used by:</strong> Bitcoin, Litecoin</p>
                         <p style="margin-top: 8px;"><strong>How:</strong> Miners compete to solve puzzles. Most work = most trusted.</p>
-                        <p style="margin-top: 8px; color: #2ea043;">✅ Battle-tested, very secure</p>
-                        <p style="color: #f85149;">❌ High energy use</p>
+                        <p style="margin-top: 8px; color: var(--ok);">✅ Battle-tested, very secure</p>
+                        <p style="color: var(--bad);">❌ High energy use</p>
                     </div>
                     <div class="comparison-item">
                         <h4>🥩 Proof of Stake (PoS)</h4>
                         <p><strong>Used by:</strong> Ethereum 2.0, Cardano</p>
                         <p style="margin-top: 8px;"><strong>How:</strong> Validators stake coins as collateral. More stake = more likely to validate.</p>
-                        <p style="margin-top: 8px; color: #2ea043;">✅ Energy efficient</p>
-                        <p style="color: #f85149;">❌ "Rich get richer" concerns</p>
+                        <p style="margin-top: 8px; color: var(--ok);">✅ Energy efficient</p>
+                        <p style="color: var(--bad);">❌ "Rich get richer" concerns</p>
                     </div>
                     <div class="comparison-item">
                         <h4>👥 Delegated PoS (DPoS)</h4>
                         <p><strong>Used by:</strong> EOS, Tron</p>
                         <p style="margin-top: 8px;"><strong>How:</strong> Token holders vote for delegates who validate blocks.</p>
-                        <p style="margin-top: 8px; color: #2ea043;">✅ Fast, scalable</p>
-                        <p style="color: #f85149;">❌ More centralized</p>
+                        <p style="margin-top: 8px; color: var(--ok);">✅ Fast, scalable</p>
+                        <p style="color: var(--bad);">❌ More centralized</p>
                     </div>
                     <div class="comparison-item">
                         <h4>⏱️ Proof of History (PoH)</h4>
                         <p><strong>Used by:</strong> Solana</p>
                         <p style="margin-top: 8px;"><strong>How:</strong> Cryptographic timestamps prove time passage.</p>
-                        <p style="margin-top: 8px; color: #2ea043;">✅ Very fast (65k TPS)</p>
-                        <p style="color: #f85149;">❌ Newer, less proven</p>
+                        <p style="margin-top: 8px; color: var(--ok);">✅ Very fast (65k TPS)</p>
+                        <p style="color: var(--bad);">❌ Newer, less proven</p>
                     </div>
                 </div>
 
@@ -1469,7 +1344,7 @@ Block 99 ─── Block 100a ─── Block 101 (Someone built on A)
                     <div id="txSignature" style="display: none; margin-top: 15px;">
                         <div class="block-field">
                             <label>Digital Signature:</label>
-                            <div class="hash-display" id="txSig" style="color: #d29922;">-</div>
+                            <div class="hash-display" id="txSig" style="color: var(--warn);">-</div>
                         </div>
                     </div>
                 </div>
@@ -1750,18 +1625,18 @@ Block 99 ─── Block 100a ─── Block 101 (Someone built on A)
                 const blockEl = document.createElement('div');
                 blockEl.className = `chain-block ${isValid ? 'valid' : 'invalid'} ${isGenesis ? 'genesis' : ''}`;
                 blockEl.innerHTML = `
-                    <div style="font-weight: bold; color: #58a6ff; margin-bottom: 10px;">
+                    <div style="font-weight: bold; color: var(--accent); margin-bottom: 10px;">
                         ${isGenesis ? '🌟 Genesis' : `Block #${block.index}`}
                     </div>
-                    <div style="font-size: 0.85rem; color: #8b949e; margin-bottom: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
                         ${block.data.substring(0, 25)}${block.data.length > 25 ? '...' : ''}
                     </div>
                     <div style="font-size: 0.7rem; margin-bottom: 5px;">
-                        <span style="color: #8b949e;">Prev:</span>
+                        <span style="color: var(--text-secondary);">Prev:</span>
                         <span class="mini-hash prev">${block.previousHash.substring(0, 8)}...</span>
                     </div>
                     <div style="font-size: 0.7rem;">
-                        <span style="color: #8b949e;">Hash:</span>
+                        <span style="color: var(--text-secondary);">Hash:</span>
                         <span class="mini-hash">${block.hash.substring(0, 8)}...</span>
                     </div>
                 `;
@@ -2114,11 +1989,11 @@ Block 99 ─── Block 100a ─── Block 101 (Someone built on A)
                     </div>
                     <div class="block-field">
                         <label>Data:</label>
-                        <div style="padding: 10px; background: #0d1117; border-radius: 6px; color: #e6edf3;">${block.data}</div>
+                        <div style="padding: 10px; background: var(--bg); border-radius: 6px; color: var(--text);">${block.data}</div>
                     </div>
                     <div class="block-field">
                         <label>Nonce:</label>
-                        <div style="color: #d29922;">${block.nonce.toLocaleString()} ${block.miningAttempts ? `(found in ${block.miningAttempts.toLocaleString()} attempts)` : ''}</div>
+                        <div style="color: var(--warn);">${block.nonce.toLocaleString()} ${block.miningAttempts ? `(found in ${block.miningAttempts.toLocaleString()} attempts)` : ''}</div>
                     </div>
                     <div class="block-field">
                         <label>Previous Hash:</label>
@@ -2135,7 +2010,7 @@ Block 99 ─── Block 100a ─── Block 101 (Someone built on A)
             document.getElementById('playgroundBlockCount').textContent = playgroundChain.length;
             document.getElementById('playgroundTotalMines').textContent = totalMiningAttempts.toLocaleString();
             document.getElementById('playgroundChainValid').textContent = '✓';
-            document.getElementById('playgroundChainValid').style.color = '#2ea043';
+            document.getElementById('playgroundChainValid').style.color = 'var(--ok)';
         }
 
         function resetPlayground() {
