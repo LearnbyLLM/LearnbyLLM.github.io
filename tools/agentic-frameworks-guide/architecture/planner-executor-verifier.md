@@ -160,7 +160,7 @@ Do not use PEV for:
 
 ## Implementation in Claude Code
 
-Create three agents in `.claude/agents/`:
+Create three subagents in `.claude/agents/`:
 
 ```
 .claude/
@@ -170,17 +170,50 @@ Create three agents in `.claude/agents/`:
     verifier.md
 ```
 
-The orchestrator skill invokes them sequentially:
+Each file is YAML frontmatter plus a system prompt. The `tools` field is what makes the separation real — it is a hard allowlist, not an instruction the model can talk itself out of:
 
-```bash
-# In orchestrator skill
-claude chat --agent planner --prompt "Create plan for: $TASK"
-claude chat --agent executor --prompt "Execute: .claude/runs/$RUN_ID/plan.md"
-claude chat --agent verifier --prompt "Verify: .claude/runs/$RUN_ID/execution.md"
+```yaml
+# planner.md — can read and write the plan, cannot execute or edit code
+---
+name: planner
+description: Creates execution plans with scope, safety constraints, and success criteria
+tools: Read, Grep, Glob, Write
+model: opus
+---
+
+# executor.md — the only agent with write/execute access
+---
+name: executor
+description: Executes approved plans step by step without expanding scope
+tools: Read, Edit, Write, Bash, Grep, Glob
+model: sonnet
+---
+
+# verifier.md — audits by reading, cannot run or change anything
+---
+name: verifier
+description: Audits execution logs against plan success criteria and issues a verdict
+tools: Read, Grep, Glob, Write
+model: sonnet
+---
 ```
 
-Each agent has constrained permissions via settings:
+(Full templates with system prompts: [Copy-Paste Agents](../templates/copy-paste-agents.md).)
 
-- Planner: read-only, can write to `.claude/runs/<run-id>/` only
-- Executor: read-write, follows plan strictly
-- Verifier: read-only, can write verdict.md only
+The main session is the orchestrator. It runs the pipeline by delegating to each subagent in turn via the Agent tool — either because you ask in plain language, or guaranteed via @-mentions:
+
+```text
+@agent-planner create a plan for: refactor the auth module.
+Write it to .claude/runs/auth-refactor/plan.md
+# review the plan, then:
+@agent-executor execute .claude/runs/auth-refactor/plan.md
+@agent-verifier verify .claude/runs/auth-refactor/execution.md against the plan
+```
+
+To make the whole pipeline a single repeatable command, wrap it in a skill (`.claude/skills/pev/SKILL.md`) whose instructions delegate to the three agents in sequence and pause for plan approval — then it's just `/pev <task>`. See the [Agentic Run skill template](../templates/copy-paste-hooks.md#agentic-run-skill).
+
+Layer the constraints:
+
+- Planner and Verifier: no Edit, no Bash in their `tools` — structurally incapable of execution
+- Executor: full toolset; add `isolation: worktree` to its frontmatter to run it against an isolated git worktree, so even a bad execution never touches your checkout
+- Project-wide `permissions.deny` rules in `.claude/settings.json` (protecting `.env`, `.git/`, etc.) apply to all three as a second layer

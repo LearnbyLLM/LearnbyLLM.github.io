@@ -198,28 +198,31 @@ Remove password from log statement and re-verify.
 3. If re-planning, create a new focused plan to fix the specific issue
 4. If escalating, show the verdict to the user
 
-Example re-plan flow:
+Example re-plan flow (headless, using the real `--agent` and `-p` flags — there are no `--plan` or `--run-id` flags; pass paths in the prompt):
 
 ```bash
 # Original run failed
-cat .claude/runs/2025-02-05-add-auth/verdict.md
+cat .claude/runs/2026-06-10-add-auth/verdict.md
 # Verdict: FAIL - password in logs
 
+RUN=2026-06-10-fix-auth-logging
+
 # Create focused fix plan
-claude-code --agent planner \
-  --context "Previous run 2025-02-05-add-auth failed verification: password logged in plaintext. Plan fix." \
-  --run-id 2025-02-05-fix-auth-logging
+claude --agent planner -p "Previous run 2026-06-10-add-auth failed \
+verification: password logged in plaintext. Plan a fix. \
+Write the plan to .claude/runs/$RUN/plan.md"
 
 # Execute the fix
-claude-code --agent executor \
-  --plan .claude/runs/2025-02-05-fix-auth-logging/plan.md \
-  --run-id 2025-02-05-fix-auth-logging
+claude --agent executor -p "Execute the plan in .claude/runs/$RUN/plan.md. \
+Log each step to .claude/runs/$RUN/execution.md"
 
 # Verify again
-claude-code --agent verifier \
-  --execution .claude/runs/2025-02-05-fix-auth-logging/execution.md \
-  --run-id 2025-02-05-fix-auth-logging
+claude --agent verifier -p "Verify the execution log in \
+.claude/runs/$RUN/execution.md against the plan. \
+Write your verdict to .claude/runs/$RUN/verdict.md"
 ```
+
+Inside an interactive session, the same loop is simpler: `@agent-planner`, `@agent-executor`, and `@agent-verifier` mentions guarantee delegation to the right subagent, and the orchestrating session carries the failure context between them.
 
 ## Research Failures
 
@@ -273,6 +276,29 @@ DO NOT:
 - Make up information when data is missing
 - Present uncertain findings as confident
 ```
+
+## Hooks: Catching Failures Deterministically
+
+Claude Code fires dedicated hook events on failure, so your error handling doesn't depend on the model remembering to report problems:
+
+- **`PostToolUseFailure`** — fires after any tool call fails. The event includes `tool_name`, `tool_input`, and a `tool_output` with `isError: true` and the error text. Use it to log every failure, or return a top-level `{"decision": "block", "reason": "..."}` to feed corrective guidance back to Claude.
+- **`StopFailure`** — fires when a turn ends due to an API error. The matcher is the error type: `rate_limit`, `overloaded`, `server_error`, `authentication_failed`, `billing_error`, `max_output_tokens`, and more. It's observability-only (you can't block it), which makes it the right place to page someone or trigger an external retry.
+
+```json
+// .claude/settings.json
+{
+  "hooks": {
+    "PostToolUseFailure": [
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": ".claude/hooks/log_failure.py" }] }
+    ],
+    "StopFailure": [
+      { "matcher": "rate_limit|overloaded|server_error", "hooks": [{ "type": "command", "command": ".claude/hooks/notify_transient_error.sh" }] }
+    ]
+  }
+}
+```
+
+The matcher split mirrors the retry-vs-escalate decision below: transient API errors (`StopFailure` with `rate_limit`/`overloaded`) are retryable by an outer loop; tool failures (`PostToolUseFailure`) usually mean the plan or environment is wrong and a human or the planner should look.
 
 ## Retry Strategies
 

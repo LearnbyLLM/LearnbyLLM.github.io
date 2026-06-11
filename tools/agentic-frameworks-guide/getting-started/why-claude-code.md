@@ -21,20 +21,18 @@ Claude Code loads this file automatically in every session. It's the source of t
 
 ### 2. Subagents (Task Delegation)
 
-Invoke specialized agents using `claude --agent <name>` or programmatically through the Skill system.
-
-```bash
-# Direct invocation
-claude --agent planner "Design login system"
-
-# From within an agent
-claude --agent executor --input plan.yaml
-```
-
-**Agent files** live in `.claude/agents/`:
+Subagents are markdown files with YAML frontmatter in `.claude/agents/`. Each one runs in its own context window with its own tool allowlist, model, and permission mode.
 
 ```markdown
 # .claude/agents/planner.md
+---
+name: planner
+description: Breaks user requirements into atomic, verifiable tasks. Use for any non-trivial feature request.
+tools: Read, Grep, Glob
+model: opus
+permissionMode: plan
+---
+
 You are the Planner agent. Your role:
 - Read user requirements
 - Break into atomic tasks
@@ -42,105 +40,84 @@ You are the Planner agent. Your role:
 - NEVER write code directly
 ```
 
-Agents inherit from `CLAUDE.md` but can override specific behaviors.
+There are several ways to invoke a subagent:
+
+```bash
+# Run a whole session as the agent
+claude --agent planner "Design login system"
+
+# Inside a session: guarantee delegation with an @-mention
+@agent-planner design the login system
+
+# Or just describe the work — Claude auto-delegates based on the
+# description field, spawning the subagent via its Agent tool
+"Plan out the login system before touching any code"
+```
+
+Subagents inherit project context from `CLAUDE.md`, but their frontmatter controls what they can do: `tools` restricts the toolset, `model` picks an alias (`opus`, `sonnet`, `haiku`, `fable`), `maxTurns` caps the loop. The parent only sees the subagent's final summary — context stays clean.
 
 ### 3. Skills (Reusable Workflows)
 
-Encapsulate multi-step operations as callable functions.
+Skills encapsulate multi-step procedures as a directory with a `SKILL.md` file (the successor to the old `.claude/commands/` files, which still work as aliases).
 
-```typescript
-// .claude/skills/implement-feature.ts
-export default {
-  name: "implement-feature",
-  description: "Full feature implementation pipeline",
+```markdown
+# .claude/skills/implement-feature/SKILL.md
+---
+name: implement-feature
+description: Full feature implementation pipeline — plan, execute, verify
+---
 
-  async execute(args: { feature: string }) {
-    // Step 1: Plan
-    const plan = await claude.agent("planner", {
-      input: `Feature: ${args.feature}`
-    });
+Implement the feature described in: $ARGUMENTS
 
-    // Step 2: Execute
-    const code = await claude.agent("executor", {
-      input: plan.artifact
-    });
-
-    // Step 3: Verify
-    const results = await claude.agent("verifier", {
-      input: code.artifact
-    });
-
-    return results;
-  }
-};
+1. Delegate planning to the planner subagent; save the plan as an artifact
+2. Delegate implementation to the executor subagent with the plan as input
+3. Delegate verification to the verifier subagent
+4. Report the verdict. If FAIL, stop and surface the reasons.
 ```
 
-Skills are invoked with `/implement-feature feature="login"` or programmatically.
+Skills are invoked with `/implement-feature login`, or automatically by Claude (via its `Skill` tool) when the description matches. They support `$ARGUMENTS`, dynamic context injection (`` !`git diff` `` runs before Claude sees the skill), supporting files, and `context: fork` for isolated execution.
 
 ### 4. Hooks (Lifecycle Enforcement)
 
-Intercept agent operations to enforce policies.
-
-```typescript
-// .claude/hooks/pre-write.ts
-export default {
-  name: "pre-write",
-
-  async execute(context: WriteContext) {
-    // Enforce: Only Executor can write to /src
-    if (context.agent !== "executor" && context.path.startsWith("/src")) {
-      throw new Error("Unauthorized: Only Executor can modify /src");
-    }
-
-    // Enforce: All writes must be planned
-    if (!context.metadata.taskId) {
-      throw new Error("Missing taskId: All writes must reference a task");
-    }
-
-    return context;
-  }
-};
-```
-
-**Hook types:**
-- `pre-write`: Before file modifications
-- `post-write`: After file modifications
-- `pre-execute`: Before command execution
-- `post-execute`: After command execution
-- `pre-agent`: Before subagent invocation
-- `post-agent`: After subagent returns
-
-### 5. Settings/Permissions (Sandbox Boundaries)
-
-Control what agents can access via `.claude/settings.json`.
+Hooks intercept the agent lifecycle with deterministic code — the model can't talk its way past them. They're configured in settings files, not invented APIs:
 
 ```json
+// .claude/settings.json
 {
-  "agents": {
-    "planner": {
-      "permissions": {
-        "read": ["**/*"],
-        "write": [],
-        "execute": []
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [{ "type": "command", "command": ".claude/hooks/write-guard.sh" }]
       }
-    },
-    "executor": {
-      "permissions": {
-        "read": ["**/*"],
-        "write": ["src/**", "tests/**"],
-        "execute": ["npm test", "npm run build"]
-      }
-    },
-    "verifier": {
-      "permissions": {
-        "read": ["**/*"],
-        "write": ["reports/**"],
-        "execute": ["npm test", "npm run lint"]
-      }
-    }
+    ]
   }
 }
 ```
+
+A command hook receives JSON on stdin (`session_id`, `tool_name`, `tool_input`, `permission_mode`, ...) and can block the call — by exiting `2`, or by returning a JSON `permissionDecision` of `deny`, `allow`, or `ask`.
+
+**Key hook events** (there are 30+): `PreToolUse` / `PostToolUse` / `PostToolUseFailure` around every tool call; `PermissionRequest` / `PermissionDenied` around the permission system; `SubagentStart` / `SubagentStop` around subagent invocations (matcher = agent name); `UserPromptSubmit`, `Stop`, `SessionStart`, `SessionEnd` for turn and session lifecycle. Besides `command`, hooks can be `prompt` (a fast model judges a decision), `agent`, `http`, or `mcp_tool`.
+
+### 5. Settings/Permissions (Sandbox Boundaries)
+
+Control what agents can access via `.claude/settings.json` permission rules:
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(npm test)", "Edit(src/**)", "Edit(tests/**)"],
+    "deny": ["Read(//**/.env)", "Bash(curl *)", "WebFetch"],
+    "ask": ["Bash(git push *)"]
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": { "allowedDomains": ["registry.npmjs.org", "github.com"] }
+  }
+}
+```
+
+Rules are fine-grained per tool: `Bash(npm run *)` glob-matches commands, `Read(//**/.env)` matches file paths, `WebFetch(domain:example.com)` scopes by domain, `Agent(planner)` and `Skill(deploy)` gate delegation itself. The `sandbox` block applies **OS-level** filesystem and network isolation to Bash and its child processes — not prompt-level, kernel-level. Per-agent restrictions live in each subagent's frontmatter (`tools`, `permissionMode`).
 
 Claude Code enforces these at runtime. An agent attempting unauthorized operations fails immediately.
 
@@ -151,8 +128,8 @@ Claude Code enforces these at runtime. An agent attempting unauthorized operatio
 | **Setup Complexity** | Edit markdown files | Write Python boilerplate | Install external framework | Configure agents in code |
 | **Agent Definition** | `.claude/agents/*.md` | Python classes | YAML + Python | Python classes |
 | **Tool Integration** | Native (Bash, Read, Write) | Manual wrapper functions | Manual integrations | Manual integrations |
-| **Permissions** | `.claude/settings.json` | Manual enforcement | Not built-in | Not built-in |
-| **Lifecycle Hooks** | `.claude/hooks/*.ts` | Custom middleware | Limited | Limited |
+| **Permissions** | Fine-grained rules + OS sandbox | Manual enforcement | Not built-in | Not built-in |
+| **Lifecycle Hooks** | 30+ events in settings.json | Custom middleware | Limited | Limited |
 | **Development Experience** | AI runtime = IDE | AI separate from IDE | AI separate from IDE | AI separate from IDE |
 
 ### Why Claude Code is Simpler
@@ -174,6 +151,10 @@ class PlannerAgent(Agent):
 **Claude Code:**
 ```markdown
 # .claude/agents/planner.md
+---
+name: planner
+description: Creates execution plans from requirements
+---
 You are the Planner. Analyze input and output plan.yaml.
 ```
 
@@ -215,27 +196,17 @@ The agent already has native access to:
 
 You just define **roles** and **boundaries**. The runtime handles execution.
 
+## Beyond the Terminal
+
+The same primitives work everywhere Claude Code runs:
+
+- **Claude Agent SDK** (renamed from "Claude Code SDK"): embed the agent harness in your own apps via `@anthropic-ai/claude-agent-sdk` (npm) or `claude-agent-sdk` (PyPI). Same tools, hooks, subagents, permissions, and `.claude/` loading as the CLI. Docs: https://code.claude.com/docs/en/agent-sdk/overview
+- **Claude Code on the web**: browser sessions on managed infrastructure — no local install, same `.claude/` config from your repo.
+- **Model lineup**: Opus 4.8 is the default. Pin cheaper models per role with the `sonnet` and `haiku` aliases, or reach for `fable` (Claude Fable 5, the top tier) for the hardest reasoning.
+
 ## Production-Ready Features
 
-Claude Code includes enterprise features out of the box:
-
-```json
-{
-  "security": {
-    "sandboxMode": true,
-    "allowedCommands": ["npm", "git", "pytest"],
-    "blockedPaths": [".env", "credentials.json"]
-  },
-  "observability": {
-    "logLevel": "info",
-    "auditLog": ".claude/audit.jsonl"
-  },
-  "resourceLimits": {
-    "maxFileSize": "10MB",
-    "maxExecutionTime": "300s"
-  }
-}
-```
+Enterprise features ship out of the box: native OS-level sandboxing (`sandbox` settings), managed settings for org-wide policy that user/project files cannot loosen, OpenTelemetry export (`CLAUDE_CODE_ENABLE_TELEMETRY=1`) with per-subagent cost attribution, and six permission modes from fully supervised (`plan`) to fully autonomous (`bypassPermissions`).
 
 No external logging services. No custom security layers. It's built-in.
 

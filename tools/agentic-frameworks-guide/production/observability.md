@@ -4,7 +4,7 @@ Observability in agentic systems answers three questions: what happened, why it 
 
 ## Artifact-Based Observability
 
-Every agent run in Claude Code produces artifacts. These are markdown files stored in `.claude/runs/<run-id>/` that capture each agent's work:
+Every agent run in this guide's reference implementation produces artifacts. These are markdown files stored in `.claude/runs/<run-id>/` that capture each agent's work:
 
 - `plan.md` - The planner's proposed approach
 - `execution.md` - The executor's step-by-step actions and results
@@ -19,9 +19,9 @@ Use timestamps plus task descriptions for run IDs:
 
 ```bash
 # Good
-2025-02-05-add-auth
-2025-02-05-fix-validation-bug
-2025-02-05-research-caching-strategies
+2026-06-10-add-auth
+2026-06-10-fix-validation-bug
+2026-06-10-research-caching-strategies
 
 # Bad
 run-1
@@ -33,8 +33,10 @@ This makes it easy to find runs later:
 
 ```bash
 ls .claude/runs/ | grep add-auth
-# 2025-02-05-add-auth
+# 2026-06-10-add-auth
 ```
+
+Inside skills and hooks, `${CLAUDE_SESSION_ID}` is available — embed it in run IDs or log lines so artifacts correlate with session transcripts and telemetry.
 
 ## Reading Artifacts After a Run
 
@@ -42,13 +44,13 @@ Inspect artifacts to understand what happened:
 
 ```bash
 # Check the plan
-cat .claude/runs/2025-02-05-add-auth/plan.md
+cat .claude/runs/2026-06-10-add-auth/plan.md
 
 # See what the executor actually did
-cat .claude/runs/2025-02-05-add-auth/execution.md
+cat .claude/runs/2026-06-10-add-auth/execution.md
 
 # Read the verifier's verdict
-cat .claude/runs/2025-02-05-add-auth/verdict.md
+cat .claude/runs/2026-06-10-add-auth/verdict.md
 ```
 
 Example `plan.md`:
@@ -122,58 +124,82 @@ Changes are safe to commit.
 
 ## Adding a PostToolUse Hook for Logging
 
-Log every tool call for deeper observability:
+Log every tool call for deeper observability. Hooks receive a JSON event on stdin — including `session_id`, `tool_name`, and `tool_input`:
 
 ```python
+#!/usr/bin/env python3
 # .claude/hooks/log_tools.py
 import json
-import os
-from datetime import datetime
+import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
-def post_tool_use(tool_name, args, result, context):
-    """Log every tool call with timestamp and details"""
+def main():
+    event = json.load(sys.stdin)
 
-    run_id = context.get("run_id", "unknown")
-    log_dir = Path(f".claude/runs/{run_id}/logs")
+    log_dir = Path(".claude/runs/logs")
     log_dir.mkdir(parents=True, exist_ok=True)
 
     log_entry = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "tool": tool_name,
-        "args": args,
-        "result_preview": str(result)[:200],  # First 200 chars
-        "success": not isinstance(result, Exception)
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "session_id": event.get("session_id"),
+        "event": event.get("hook_event_name"),
+        "tool": event.get("tool_name"),
+        "tool_input": event.get("tool_input"),
     }
 
-    log_file = log_dir / "tool_calls.jsonl"
-    with open(log_file, "a") as f:
+    with open(log_dir / "tool_calls.jsonl", "a") as f:
         f.write(json.dumps(log_entry) + "\n")
 
-    return result  # Pass through unchanged
+    sys.exit(0)  # non-zero would surface as a hook error
+
+if __name__ == "__main__":
+    main()
 ```
 
-Register the hook in `.claude/settings.json`:
+Register the hook in `.claude/settings.json`. Register it for failures too — `PostToolUse` only fires on success, `PostToolUseFailure` on failure:
 
 ```json
 {
   "hooks": {
-    "post_tool_use": ".claude/hooks/log_tools.py:post_tool_use"
+    "PostToolUse": [{ "matcher": "*", "hooks": [{ "type": "command", "command": ".claude/hooks/log_tools.py" }] }],
+    "PostToolUseFailure": [{ "matcher": "*", "hooks": [{ "type": "command", "command": ".claude/hooks/log_tools.py" }] }]
   }
 }
 ```
 
-Now every tool call is logged:
-
-```bash
-cat .claude/runs/2025-02-05-add-auth/logs/tool_calls.jsonl
-```
+Now every tool call lands in `tool_calls.jsonl`:
 
 ```json
-{"timestamp": "2025-02-05T14:32:01.123Z", "tool": "Bash", "args": {"command": "npm install jsonwebtoken"}, "result_preview": "added 1 package, and audited 245 packages in 2s", "success": true}
-{"timestamp": "2025-02-05T14:32:15.456Z", "tool": "Write", "args": {"file_path": "/project/src/middleware/auth.js"}, "result_preview": "File written successfully", "success": true}
-{"timestamp": "2025-02-05T14:32:28.789Z", "tool": "Edit", "args": {"file_path": "/project/src/routes/users.js"}, "result_preview": "Edit successful", "success": true}
+{"timestamp": "2026-06-10T14:32:01+00:00", "session_id": "a1b2c3", "event": "PostToolUse", "tool": "Bash", "tool_input": {"command": "npm install jsonwebtoken"}}
+{"timestamp": "2026-06-10T14:32:28+00:00", "session_id": "a1b2c3", "event": "PostToolUseFailure", "tool": "Bash", "tool_input": {"command": "npm test"}}
 ```
+
+## Tracing Subagents and Tasks
+
+Multi-agent runs need agent-level tracing, not just tool-level. Four hook events cover the delegation lifecycle — point the same logging hook at them:
+
+- `SubagentStart` / `SubagentStop` — fire when a subagent spawns/finishes. The matcher is the agent type (`planner`, `executor`...), and the event carries `agent_type` and a unique `agent_id`.
+- `TaskCreated` / `TaskCompleted` — fire around task lifecycle, with `task_id` and `task_title`.
+
+Now your JSONL shows the full delegation tree: which agent started, what tools it called, when it stopped.
+
+## OpenTelemetry: The Production Answer
+
+For team or org-scale monitoring, skip the homegrown scripts — Claude Code exports metrics, events, and traces via OpenTelemetry natively:
+
+```bash
+export CLAUDE_CODE_ENABLE_TELEMETRY=1
+export OTEL_METRICS_EXPORTER=otlp     # or prometheus, console
+export OTEL_LOGS_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+```
+
+Key metrics: `claude_code.token.usage` (by `type`: input/output/cacheRead/cacheCreation), `claude_code.cost.usage` (USD), `claude_code.code_edit_tool.decision` (accept/reject counts), plus session, lines-of-code, and active-time counters. Cost and token metrics carry `model`, `query_source` (main/subagent/auxiliary), and `agent.name` attribution.
+
+All metrics carry a `session.id` attribute, and LLM request/tool spans carry `agent_id` and `parent_agent_id` — so a trace shows exactly which subagent in which delegation chain issued each request. Tag teams with `OTEL_RESOURCE_ATTRIBUTES="department=eng,team.id=platform"`; the keys become queryable labels.
+
+For a quick in-session check without any of this infrastructure, run `/usage` — it breaks consumption down by category (skills, subagents, plugins, MCP servers).
 
 ## Aggregating Runs
 
@@ -205,9 +231,9 @@ Output:
 ```
 Run ID                          | Verdict | Date
 --------------------------------|---------|------------
-2025-02-05-add-auth            | PASS    | 2025-02-05
-2025-02-05-fix-validation-bug  | PASS    | 2025-02-05
-2025-02-04-refactor-db         | FAIL    | 2025-02-04
+2026-06-10-add-auth            | PASS    | 2026-06-10
+2026-06-10-fix-validation-bug  | PASS    | 2026-06-10
+2026-06-09-refactor-db         | FAIL    | 2026-06-09
 ```
 
 ## Tips
@@ -237,11 +263,4 @@ grep -r "Result: FAILED" .claude/runs/*/execution.md
 grep -r "src/middleware/auth.js" .claude/runs/*/execution.md
 ```
 
-**Archive old runs.** After a month, move runs to an archive directory:
-
-```bash
-mkdir -p .claude/archive/2025-01
-mv .claude/runs/2025-01-* .claude/archive/2025-01/
-```
-
-This keeps your runs directory focused on recent work while preserving history.
+**Archive old runs.** After a month, move runs to `.claude/archive/<year-month>/`. This keeps your runs directory focused on recent work while preserving history.

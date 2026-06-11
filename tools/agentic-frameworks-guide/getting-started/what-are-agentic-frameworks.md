@@ -45,13 +45,13 @@ Each agent has a single responsibility:
 - **Researcher**: Searches documentation, gathers context
 
 ### Trust Boundaries
-Agents operate within defined permission levels:
+Agents operate within defined permission levels. In Claude Code these map directly onto subagent tool allowlists and permission modes:
 
 ```
-Planner: Read-only (no file writes)
-Executor: Write access to /src and /tests only
-Verifier: Execute tests, read results
-Researcher: Network access, read-only files
+Planner: read-only (permissionMode: plan — no writes possible)
+Executor: Edit/Write allowed under src/ and tests/ only
+Verifier: can run tests and read results, cannot edit
+Researcher: web access, but no Bash and no file writes
 ```
 
 ### Artifact Generation
@@ -157,6 +157,8 @@ Don't use a multi-agent framework when:
 - Tasks are simple and atomic ("Fix this typo")
 - Speed matters more than verification
 - You don't need audit trails
+
+In Claude Code, the building blocks for all of this ship natively: **subagents** (role specialization with isolated context), **skills** (reusable workflows), **hooks** (deterministic enforcement), **CLAUDE.md** (shared instructions), and **settings/permissions** (trust boundaries, down to OS-level sandboxing). You can also delegate without ceremony — Claude automatically hands work to a subagent whose description matches, or you force it with an `@agent-name` mention.
 
 ## Next Steps
 

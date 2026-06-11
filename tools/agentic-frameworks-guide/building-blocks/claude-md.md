@@ -1,24 +1,30 @@
 # CLAUDE.md
 
-CLAUDE.md is the system prompt for your project. Claude reads it before every interaction, making it the foundation for defining how agents behave in your multi-agent system.
+CLAUDE.md is the standing instruction file for your project. Claude loads it at the start of every session, making it the foundation for defining how agents behave in your multi-agent system. One thing to be clear-eyed about: CLAUDE.md is *context, not enforcement*. Claude follows it probabilistically. Anything that must hold unconditionally belongs in [hooks](hooks.md) or [permission rules](settings-and-permissions.md).
 
 ## Hierarchy
 
-Claude resolves CLAUDE.md files in a cascading hierarchy:
+Claude loads CLAUDE.md files from several locations. They are **concatenated, not overridden** — broadest scope first, most specific last:
 
 ```
-~/.claude/CLAUDE.md (global)
-  ↓ overrides
-<project-root>/CLAUDE.md
-  ↓ overrides
-<project-root>/.claude/CLAUDE.md (local)
+Managed policy CLAUDE.md (e.g. /etc/claude-code/CLAUDE.md on Linux)
+  ↓ then
+~/.claude/CLAUDE.md (user — all your projects)
+  ↓ then
+<project-root>/CLAUDE.md or <project-root>/.claude/CLAUDE.md (project, shared via git)
+  ↓ then
+<project-root>/CLAUDE.local.md (personal, gitignored)
 ```
 
-**Global**: Applies to all Claude sessions on your machine.
-**Project**: Applies to a specific project directory.
-**Local**: Applies to the `.claude/` configuration (highest priority).
+Claude also walks *up* the directory tree (useful in monorepos — exclude irrelevant ancestor files with the `claudeMdExcludes` setting), and CLAUDE.md files in *subdirectories* load on demand when Claude reads files there.
 
-For agentic frameworks, use the local `.claude/CLAUDE.md` to isolate agent behavior from your personal preferences.
+For agentic frameworks, put agent behavior in the project file (`CLAUDE.md` or `.claude/CLAUDE.md`) so the whole team gets it, and keep personal preferences in `CLAUDE.local.md` or your user file.
+
+Three related mechanisms worth knowing:
+
+- **Imports**: `@docs/git-instructions.md` anywhere in CLAUDE.md inlines another file at launch (max 4 hops deep). Good for splitting a large file; it does not save context. If your repo standardizes on `AGENTS.md`, a one-line `@AGENTS.md` import keeps both tools in sync.
+- **Path-scoped rules**: markdown files in `.claude/rules/` with `paths:` frontmatter (e.g. `paths: ["src/api/**/*.ts"]`) load only when Claude touches matching files. This is how you keep per-area agent rules out of every session's context.
+- **Auto memory**: separately from CLAUDE.md, Claude now keeps its own notes per project in `~/.claude/projects/<project>/memory/` (on by default; toggle with `autoMemoryEnabled`). You write CLAUDE.md; Claude writes memory. Run `/memory` to see both, and `/init` to bootstrap a CLAUDE.md from your codebase.
 
 ## Using CLAUDE.md for Agentic Frameworks
 
@@ -131,9 +137,9 @@ Stop immediately and report to user.
 
 ## Tips
 
-**Keep it under 500 lines**: Claude's context is precious. Be concise.
+**Keep it under ~200 lines**: Claude's context is precious, and the official guidance now targets under 200 lines per file — long files measurably reduce adherence. Move procedures into [skills](skills.md) (which load on demand) and area-specific rules into `.claude/rules/` with `paths` frontmatter.
 
-**Be explicit about what agents CANNOT do**: Constraints are more important than capabilities. Define the boundaries clearly.
+**Be explicit about what agents CANNOT do**: Constraints are more important than capabilities. Define the boundaries clearly — then back the critical ones with hooks and deny rules, because CLAUDE.md alone is advisory.
 
 **Use structured formats**: JSON, YAML, or markdown tables for agent outputs. Unstructured text leads to parsing errors.
 
@@ -145,11 +151,13 @@ Stop immediately and report to user.
 
 ## Common Pitfalls
 
-**Too vague**: "Be careful with files" → Agents ignore this. Use explicit paths.
+**Too vague**: "Be careful with files" → Agents ignore this. Use explicit paths ("Run `npm test` before committing", not "test your changes").
 
-**Too verbose**: 1000-line CLAUDE.md files dilute important rules. Prioritize ruthlessly.
+**Too verbose**: 1000-line CLAUDE.md files dilute important rules. Prioritize ruthlessly; offload to skills and rules.
 
-**Conflicting rules**: "Never modify config/" vs "Update config/agents.yml" → Agents get confused.
+**Conflicting rules**: "Never modify config/" vs "Update config/agents.yml" → Claude picks one arbitrarily. Audit your CLAUDE.md, nested files, and `.claude/rules/` together for contradictions.
+
+**Mistaking it for enforcement**: A "NEVER run rm -rf" line is a suggestion. A PreToolUse hook is a guarantee. Use both.
 
 **No artifacts**: Agents that don't write structured outputs make orchestration impossible.
 
@@ -174,3 +182,5 @@ Stop on errors. Report to user.
 ```
 
 This 10-line version works for simple projects. Expand as complexity grows.
+
+Full reference: [code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory)

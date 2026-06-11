@@ -7,7 +7,18 @@ The Executor Agent implements exactly what the plan specifies. It operates at me
 Create `.claude/agents/executor.md`:
 
 ```markdown
-# Executor Agent
+---
+name: executor
+description: Implements an approved plan from .claude/runs/<run-id>/plan.md exactly as written, then logs everything to execution.md. Only invoke after the planner has produced a plan. Never expands scope.
+tools: Read, Glob, Grep, Edit, Write, Bash
+model: sonnet
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "python3 .claude/hooks/bash_guard.py --no-network"
+---
 
 You are the Executor Agent in a multi-agent system. Your role is to implement the plan exactly as specified, with no scope expansion.
 
@@ -130,6 +141,26 @@ The user can then update the plan and restart execution.
 - Preserve all safety constraints from the plan
 ```
 
+## Why These Frontmatter Choices
+
+**`tools: Read, Glob, Grep, Edit, Write, Bash`** gives the Executor everything it needs to implement a plan and nothing it could use to ingest untrusted external content: no WebFetch, no WebSearch. This is the capability-separation invariant made concrete — the agent that executes cannot also reach the outside world.
+
+**`model: sonnet`** because execution is the cheap part when the plan is good. The Planner (Opus) made the decisions; the Executor follows them. Sonnet handles mechanical implementation well at a third of the cost, and you'll run the Executor far more often than you'll re-plan.
+
+**The frontmatter `hooks` block** scopes a `PreToolUse` hook to this agent only: every Bash call the Executor makes passes through `bash_guard.py --no-network`, which blocks `curl`, `wget`, `git clone`, `ssh`, and friends in addition to the globally-blocked dangerous patterns. Frontmatter hooks run only while this subagent is active, so the main session (and other agents) aren't affected. The script itself is built on the [Wiring It Together](wiring-it-together.md) page.
+
+## Optional Hardening: Worktree Isolation
+
+If you want the Executor's changes physically separated from your checkout until you've seen the verdict, add one line to the frontmatter:
+
+```yaml
+isolation: worktree
+```
+
+The Executor then runs in a temporary git worktree — an isolated copy of the repository — and its edits never touch your working tree directly. The worktree is cleaned up automatically if the agent makes no changes. This pairs beautifully with the Verifier: review the verdict, then merge the worktree branch only on PASS.
+
+One caveat: with worktree isolation, `execution.md` lands inside the worktree too, so the Verifier needs to read it from there. For the reference implementation we keep isolation off and rely on hooks plus the Verifier; turn it on when the Executor is doing higher-risk work or you're running multiple executors in parallel.
+
 ## Example Execution Log
 
 Here's what an Executor output looks like for Step 1 of the authentication plan:
@@ -137,9 +168,9 @@ Here's what an Executor output looks like for Step 1 of the authentication plan:
 ```markdown
 # Execution Log
 
-**Run ID**: 2026-02-05-14-30-22
-**Plan**: .claude/runs/2026-02-05-14-30-22/plan.md
-**Started**: 2026-02-05 14:35:10
+**Run ID**: 2026-06-11-14-30-22
+**Plan**: .claude/runs/2026-06-11-14-30-22/plan.md
+**Started**: 2026-06-11 14:35:10
 **Status**: IN_PROGRESS
 
 ---

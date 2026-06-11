@@ -1,10 +1,10 @@
 # Subagents
 
-Subagents are how Claude Code delegates work. Each subagent runs in its own context with defined capabilities, making them the core abstraction for multi-agent systems.
+Subagents are how Claude Code delegates work. Each subagent runs in its own context window with a custom system prompt, defined tool access, and independent permissions, making them the core abstraction for multi-agent systems. Claude spawns them with the **Agent tool** (renamed from Task in v2.1.63 — `Task(...)` still works as an alias) and receives back only the subagent's final summary, keeping your main context clean.
 
 ## Agent Definition Files
 
-Agent definitions live in `.claude/agents/<name>.md`. Each file is a markdown document that Claude reads as a system prompt when the agent is invoked.
+Agent definitions live in `.claude/agents/<name>.md`. Each file is markdown with YAML frontmatter; the body becomes the subagent's system prompt.
 
 ```
 .claude/agents/
@@ -14,52 +14,51 @@ Agent definitions live in `.claude/agents/<name>.md`. Each file is a markdown do
 └── researcher.md
 ```
 
+When names collide, definitions resolve in priority order: managed settings, the `--agents` CLI flag (JSON, useful for one-off testing), project `.claude/agents/`, user `~/.claude/agents/`, then plugin `agents/` directories (namespaced as `my-plugin:agent-name`).
+
 ## Anatomy of an Agent File
 
-Every agent file should define:
+Only `name` and `description` are required. The `description` matters more than you'd think: Claude uses it to decide when to auto-delegate.
 
-1. **Role description**: What is this agent's purpose?
-2. **Allowed tools**: Which Claude Code tools can it use?
-3. **Constraints**: What is it forbidden from doing?
-4. **Output format**: How does it communicate results?
+| Field | Purpose |
+|-------|---------|
+| `name` | Unique identifier (lowercase, hyphens). Hooks see it as the agent type. |
+| `description` | When Claude should delegate to this agent. Drives automatic delegation. |
+| `tools` | Allowlist. Default: inherits all tools. Supports `Agent(worker, researcher)` to restrict which agents a `--agent` main session can spawn. |
+| `disallowedTools` | Denylist, removed from the inherited or specified list. |
+| `model` | `sonnet`, `opus`, `haiku`, `fable`, a full ID like `claude-opus-4-8`, or `inherit` (default). Route cheap grunt work to Haiku. |
+| `permissionMode` | `default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, or `bypassPermissions`. |
+| `maxTurns` | Hard cap on agentic turns. Cheap insurance against runaways. |
+| `skills` | Skills whose full content is preloaded into context at startup. |
+| `memory` | `user`, `project`, or `local` — persistent memory directory across sessions. |
+| `background` | `true` to run concurrently with the main conversation. |
+| `isolation` | `worktree` — run against an isolated git worktree copy of the repo. |
+| `hooks` | Lifecycle hooks scoped to this subagent only (see [Hooks](hooks.md)). |
 
 ## Example: Research Agent
 
 `.claude/agents/researcher.md`:
 
 ```markdown
-# Researcher Agent
+---
+name: researcher
+description: Gathers information from the web and project files. Use for any research question. Read-only — never modifies files or runs commands.
+tools: Read, Grep, Glob, WebSearch, WebFetch
+model: haiku
+maxTurns: 30
+---
 
 You are a research agent. Your role is to gather information from the web and project files to answer questions.
 
-## Allowed Tools
-
-- Read: Read project files
-- Grep: Search project files
-- Glob: Find files by pattern
-- WebSearch: Search the internet
-- WebFetch: Fetch web pages
-
-## Forbidden Tools
-
-NEVER use:
-- Write: You cannot modify files
-- Edit: You cannot edit files
-- Bash: You cannot execute commands
-- NotebookEdit: You cannot modify notebooks
-
 ## Constraints
 
-- NEVER modify any files in the project
-- NEVER execute any commands
 - NEVER access sensitive files (.env, .git/, .claude/)
 - Read-only access only
 
 ## Output Format
 
-Write your findings to `.claude/runs/<run-id>/research.md` using this format:
+Write your findings into your final response using this format:
 
-```markdown
 # Research Findings
 
 **Query**: [original question]
@@ -74,11 +73,9 @@ Write your findings to `.claude/runs/<run-id>/research.md` using this format:
 
 ## Sources
 - [URL or file path]
-- [URL or file path]
 
 ## Confidence
 [High/Medium/Low] - [reasoning]
-```
 
 ## Success Criteria
 
@@ -87,41 +84,23 @@ Write your findings to `.claude/runs/<run-id>/research.md` using this format:
 - Clear distinction between project documentation and external sources
 ```
 
-**Invocation**:
-
-```bash
-claude --agent researcher "How does authentication work in this codebase?"
-```
-
-The researcher agent will:
-1. Read the agent definition from `.claude/agents/researcher.md`
-2. Apply those constraints
-3. Search the codebase and web
-4. Write findings to `.claude/runs/<run-id>/research.md`
+Note the layering: the `tools` allowlist means the agent *cannot* call Write, Edit, or Bash — that's enforced by Claude Code, not by the prompt. The prose constraints handle what tool restriction can't (which files to avoid reading).
 
 ## Example: Executor Agent
 
 `.claude/agents/executor.md`:
 
 ```markdown
-# Executor Agent
+---
+name: executor
+description: Implements code changes from a plan artifact. Use after a plan exists in .claude/runs/<run-id>/plan.json.
+tools: Read, Write, Edit, Bash, Grep, Glob
+disallowedTools: WebSearch, WebFetch
+permissionMode: acceptEdits
+maxTurns: 50
+---
 
-You are an executor agent. Your role is to implement changes based on plans from the planner agent.
-
-## Allowed Tools
-
-- Read: Read files before editing
-- Write: Create new files
-- Edit: Modify existing files
-- Bash: Run tests and build commands
-- Grep/Glob: Search for code
-
-## Forbidden Tools
-
-NEVER use:
-- WebSearch: No network access (use researcher agent)
-- WebFetch: No network access
-- Skill: No recursive skill invocation
+You are an executor agent. Implement changes based on plans from the planner agent.
 
 ## Constraints
 
@@ -132,53 +111,28 @@ NEVER use:
 
 ## Input Format
 
-Read your plan from `.claude/runs/<run-id>/plan.json`:
+Read your plan from `.claude/runs/<run-id>/plan.json` (the run id is given in your prompt):
 
-```json
 {
   "tasks": [
-    {
-      "id": "task-1",
-      "action": "create|modify|delete",
-      "target": "path/to/file",
-      "description": "what to do"
-    }
+    {"id": "task-1", "action": "create|modify|delete", "target": "path/to/file", "description": "what to do"}
   ]
 }
-```
 
 ## Output Format
 
 Write results to `.claude/runs/<run-id>/changes.json`:
 
-```json
 {
   "agent": "executor",
-  "timestamp": "2026-02-05T10:30:00Z",
+  "timestamp": "2026-06-11T10:30:00Z",
   "status": "success|failure",
   "changes": [
-    {
-      "task_id": "task-1",
-      "file": "path/to/file",
-      "action": "created|modified|deleted",
-      "status": "success|failure",
-      "error": "error message if failed"
-    }
+    {"task_id": "task-1", "file": "path/to/file", "action": "created|modified|deleted", "status": "success|failure", "error": "error message if failed"}
   ],
   "tests_run": true,
   "test_output": "..."
 }
-```
-
-## Workflow
-
-1. Read plan from `.claude/runs/<run-id>/plan.json`
-2. For each task:
-   - Use Read before Write/Edit
-   - Make the change
-   - Record the result
-3. Run tests: `npm test` or `pytest` or equivalent
-4. Write results to `changes.json`
 
 ## Error Handling
 
@@ -188,42 +142,54 @@ If ANY task fails:
 - Include error details in the failed task
 ```
 
-**Invocation**:
-
-```bash
-claude --agent executor --run-id abc123
-```
+The Bash command restrictions in the body are prompt-level only. Back them with deny rules in [settings](settings-and-permissions.md) and a PreToolUse [hook](hooks.md) — those are enforced regardless of what the model decides.
 
 ## How to Invoke Agents
 
-### CLI Invocation
+There are four real invocation paths:
 
-```bash
-# Direct invocation
-claude --agent <name> "task description"
+**Automatic delegation.** Claude reads each agent's `description` and delegates matching work via the Agent tool. This is the primary mechanism — invest in good descriptions.
 
-# With run ID for artifact sharing
-claude --agent executor --run-id abc123
+**@-mention.** `@agent-researcher how does auth work in this codebase?` guarantees invocation of a specific agent.
 
-# With additional context
-claude --agent researcher --context "Focus on security aspects"
-```
+**The Agent tool, explicitly.** Tell Claude "use the executor agent to implement the plan in .claude/runs/abc123/". The orchestrating session passes the prompt; the subagent returns a summarized result.
 
-### Programmatic Invocation
+**Main-session mode.** `claude --agent researcher "How does authentication work here?"` runs an entire session with that agent's system prompt, tool restrictions, and model. Useful for scripting and CI.
 
-From within a skill or another agent:
+There is no `--run-id` or `--context` flag. Pass run IDs and extra context in the prompt itself — agents read them from there.
 
-```markdown
-To research this topic, invoke the researcher agent:
+One structural rule to design around: **subagents cannot spawn other subagents**. Orchestration lives in the main session (or a `--agent` main session, where `tools: Agent(worker, researcher)` restricts what it may spawn). Don't design pipelines that assume nested delegation.
 
-`claude --agent researcher "How does OAuth2 work in this codebase?"`
+## Foreground vs Background
 
-Wait for the agent to complete, then read `.claude/runs/<run-id>/research.md`.
-```
+Subagents can run in the foreground (blocking, permission prompts surface to you) or in the background (concurrent, permission prompts are auto-denied, results arrive as a message when done). Claude picks based on context; you can:
+
+- Ask for it: "run this in the background"
+- Press **Ctrl+B** to background a running task
+- Set `background: true` in frontmatter for always-background agents
+- Disable entirely with `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`
+
+Background mode is what makes a verifier-running-in-parallel pattern practical. Just remember the auto-deny behavior: a background executor that needs a permission it doesn't have will fail, not wait.
+
+## Persistent Memory
+
+`memory: user|project|local` gives a subagent a memory directory that survives across sessions. The agent maintains a `MEMORY.md` index plus topic files, accumulating codebase patterns and recurring issues over time. A code-reviewer agent with `memory: project` gets meaningfully better after a few weeks of use.
+
+## Worktree Isolation
+
+`isolation: worktree` runs the subagent against a temporary git worktree — an isolated copy of the repo. Edits land in the worktree, not your checkout, and the worktree is cleaned up automatically if nothing changed. This is the right default for experimental or destructive work: let the executor go wild, then review the diff.
+
+## Forks and Agent Teams
+
+Two newer mechanisms worth knowing:
+
+**Forked subagents** (`/fork`, or `CLAUDE_CODE_FORK_SUBAGENT=1`) inherit the parent's full conversation history and tool setup instead of starting fresh, run in the background, and reuse the parent's prompt cache — cheaper than a fresh subagent when the task needs your session's context. Forks cannot spawn further forks.
+
+**Agent teams** (experimental, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) let multiple sessions communicate with each other via a SendMessage tool, rather than only reporting back to a parent. Powerful, but the artifact-based patterns below are still the more debuggable choice for production pipelines.
 
 ## Agent-to-Agent Communication
 
-Agents communicate through artifacts in `.claude/runs/<run-id>/`:
+Subagents return a summary to their parent, but for durable multi-step pipelines, communicate through artifacts in `.claude/runs/<run-id>/`:
 
 ```
 .claude/runs/abc123/
@@ -263,42 +229,43 @@ Agents communicate through artifacts in `.claude/runs/<run-id>/`:
 }
 ```
 
+Artifacts survive crashes, are diffable, and make every handoff auditable — which a transcript summary is not.
+
 ## Tips
 
-**Principle of least privilege**: Give each agent the minimum tools needed. Research agents don't need Write. Executor agents don't need WebSearch.
+**Principle of least privilege**: Use the `tools` allowlist, not prose. Research agents don't get Write. Executor agents don't get WebSearch.
 
-**Explicit constraints**: List forbidden tools explicitly. Prompts alone aren't enough.
+**Descriptions are an API**: Auto-delegation is only as good as your `description` fields. Write them like routing rules, including when *not* to use the agent.
 
-**Structured outputs**: Always use JSON for machine-readable artifacts. Markdown for human-readable reports.
+**Model routing saves money**: `model: haiku` for search and triage, `opus` or `fable` for planning and hard reasoning. Default is `inherit`.
 
-**Idempotency**: Design agents to be re-runnable. If executor fails halfway, it should be safe to re-run.
+**Cap turns**: Set `maxTurns` on every production agent. A stuck agent burning 200 turns is a real failure mode.
 
-**No recursion**: Agents should not invoke themselves or create infinite loops.
+**Structured outputs**: JSON for machine-readable artifacts, markdown for human-readable reports.
+
+**Idempotency**: Design agents to be re-runnable. If the executor fails halfway, re-running against the same `plan.json` should be safe. `isolation: worktree` makes this nearly free.
 
 ## Example: Verifier Agent
 
 `.claude/agents/verifier.md`:
 
 ```markdown
-# Verifier Agent
+---
+name: verifier
+description: Validates implementations by running tests, lints, and type checks. Read-only except test outputs.
+tools: Read, Grep, Glob, Bash
+model: sonnet
+maxTurns: 20
+---
 
 Validate implementation quality.
 
-## Allowed Tools
-- Read, Grep, Glob
-- Bash (tests/lints only)
-
-## Forbidden
-- Write, Edit (read-only)
-- WebSearch, WebFetch
-
 ## Input
-`.claude/runs/<run-id>/changes.json`
+`.claude/runs/<run-id>/changes.json` (run id provided in your prompt)
 
 ## Output
 `.claude/runs/<run-id>/verification.json`:
 
-```json
 {
   "status": "pass|fail",
   "tests": {"passed": 10, "failed": 0},
@@ -306,11 +273,12 @@ Validate implementation quality.
   "type_check": "pass",
   "issues": []
 }
-```
 
 ## Workflow
 1. Read changes.json
 2. Run: tests, lints, type checks
 3. Write verification.json
-4. Exit with status code 0 (pass) or 1 (fail)
+4. State PASS or FAIL clearly in your final response
 ```
+
+Full reference: [code.claude.com/docs/en/sub-agents](https://code.claude.com/docs/en/sub-agents)

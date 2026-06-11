@@ -6,68 +6,67 @@ Agentic systems can operate autonomously, but that doesn't mean they should. Hum
 
 Claude Code already prompts for permission on risky operations:
 
-```bash
-$ claude-code --agent executor --plan plan.md
+```
+Claude wants to run: rm -rf node_modules
 
-Executor wants to run: rm -rf /project/node_modules
-
-This operation will delete files. Allow? [y/N]
+Allow this command?
+❯ 1. Yes
+  2. Yes, and don't ask again for rm commands in this project
+  3. No, and tell Claude what to do differently
 ```
 
-This is the simplest form of HITL: permission prompts for dangerous tool calls. But you can add more sophisticated gates.
+This is the simplest form of HITL: permission prompts for tool calls that aren't pre-approved. How often you see them is governed by the **permission mode**:
+
+| Mode | Behavior | Human involvement |
+|------|----------|-------------------|
+| `default` | Prompt for anything not pre-approved by rules | High |
+| `acceptEdits` | Auto-accept file edits in the working directory | Medium |
+| `plan` | Read-only — no edits or commands at all | Total (nothing happens without you) |
+| `auto` | Auto-approve, with background safety checks | Low |
+| `dontAsk` | Auto-deny anything not explicitly allowed | Rules decide, not prompts |
+| `bypassPermissions` | Skip prompts entirely (explicit `ask` rules still fire) | Minimal — sandboxes only |
+
+Set the mode via `/permissions`, in settings files, with `--permission-mode` on the CLI, or per-subagent with `permissionMode` in the agent's frontmatter. But you can add more sophisticated gates.
 
 ## Three Levels of Human Involvement
 
-### 1. Approval Gates
+### 1. Approval Gates (Plan Mode)
 
-The user approves the entire plan before the executor runs it.
+The user approves the entire plan before anything executes. This is built in: plan mode makes the session read-only, and Claude presents its plan for explicit approval before switching to execution.
 
 ```bash
-# Run planner
-claude-code --agent planner \
-  --task "Add authentication to API" \
-  --run-id 2025-02-05-add-auth
+# Start in plan mode (or press Shift+Tab to cycle modes in-session)
+claude --permission-mode plan
 
-# Show plan to user
-cat .claude/runs/2025-02-05-add-auth/plan.md
+> Add JWT authentication to the API
 
-# User reviews and approves
-echo "Plan approved by user at $(date)" >> .claude/runs/2025-02-05-add-auth/approval.txt
-
-# Only then run executor
-claude-code --agent executor \
-  --plan .claude/runs/2025-02-05-add-auth/plan.md \
-  --run-id 2025-02-05-add-auth
+# Claude explores the codebase, then presents a plan.
+# Nothing is edited or executed until you approve it.
 ```
+
+In a multi-agent setup, give the planner subagent `permissionMode: plan` in its frontmatter so it is *architecturally incapable* of writing, then review its `plan.md` artifact before invoking the executor.
 
 This is the highest level of control. The user sees exactly what will happen before it happens.
 
-### 2. Permission Prompts
+### 2. Permission Prompts (ask rules)
 
-The user approves individual tool calls during execution.
-
-This is Claude Code's default behavior for risky operations:
-
-- File deletion
-- Bash commands with sudo
-- Git push to remote
-- External API calls (if configured)
-
-Configure which operations require permission in `.claude/settings.json`:
+The user approves individual tool calls during execution. Configure exactly which operations require approval with `ask` rules in `.claude/settings.json` — the real syntax is tool name plus a specifier:
 
 ```json
 {
   "permissions": {
-    "require_approval": [
-      "Bash:rm",
-      "Bash:sudo",
-      "Bash:git push",
-      "Edit:/etc/*",
-      "Write:/etc/*"
+    "ask": [
+      "Bash(rm *)",
+      "Bash(sudo *)",
+      "Bash(git push *)",
+      "Edit(//etc/**)",
+      "Write(//etc/**)"
     ]
   }
 }
 ```
+
+`ask` rules even fire in `bypassPermissions` mode — they're the non-negotiable checkpoints. For approval logic that pattern-matching can't express ("ask only if this touches a migration"), a `PreToolUse` hook can return `"permissionDecision": "ask"` to force a prompt dynamically, and `PermissionRequest` hooks can auto-answer prompts based on your own policy code.
 
 ### 3. Post-Verification Review
 
@@ -75,10 +74,10 @@ The user reviews the verifier's verdict before accepting changes.
 
 ```bash
 # Run full PEV cycle
-./run_agentic.sh "Add caching layer"
+claude -p "/implement-feature Add caching layer"
 
 # Verifier produces verdict
-cat .claude/runs/2025-02-05-add-caching/verdict.md
+cat .claude/runs/2026-06-10-add-caching/verdict.md
 
 # If PASS, user reviews before committing
 git diff
@@ -87,125 +86,106 @@ git commit -m "Add caching layer (verified by agent)"
 
 This is the lowest level of control. The work is done, but the user reviews before finalizing.
 
-## Configuring Approval Gates
+## Letting the Agent Ask
 
-Use skill orchestration to pause between agents and require approval.
+There's a fourth mechanism that inverts the flow: Claude Code's built-in **AskUserQuestion** tool lets the agent pause mid-task and put a structured multiple-choice question to the human — "Should I migrate the schema now or generate a migration script for review?" — instead of guessing.
 
-Create an approval skill:
+Encourage it in your agent definitions:
 
 ```markdown
-# .claude/skills/approved-agentic-run.md
+# .claude/agents/executor.md (body)
 
-# Approved Agentic Run
-
-This skill runs a full agentic workflow with approval gates.
-
-## Steps
-
-1. Run planner agent
-2. PAUSE - show plan to user and wait for approval
-3. Run executor agent
-4. Run verifier agent
-5. PAUSE - show verdict to user and wait for approval
-
-## Usage
-
-claude-code --skill approved-agentic-run --args "task description"
+When a step is ambiguous, irreversible, or touches production config,
+use the AskUserQuestion tool to confirm direction before proceeding.
+Never resolve ambiguity in favor of the more destructive option.
 ```
 
-Implement the skill as a bash script:
+And for cheap automated judgment calls that don't need a human, hooks support `"type": "prompt"` — a fast model evaluates the event and returns an allow/deny decision:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash",
+      "hooks": [{
+        "type": "prompt",
+        "prompt": "Deny if this command could deploy, publish, or delete data; otherwise allow: $ARGUMENTS"
+      }]
+    }]
+  }
+}
+```
+
+Use prompt hooks to *triage* — let them auto-allow the obviously safe calls so human attention is reserved for the genuinely risky ones.
+
+## Configuring Approval Gates in a Workflow
+
+Use a skill to orchestrate the pipeline and pause for approval between agents:
+
+```markdown
+# .claude/skills/approved-agentic-run/SKILL.md
+---
+name: approved-agentic-run
+description: Full plan-execute-verify workflow with human approval gates
+disable-model-invocation: true
+---
+
+Run an approved agentic workflow for: $ARGUMENTS
+
+1. Delegate to the planner subagent. Save its plan to .claude/runs/<run-id>/plan.md.
+2. APPROVAL GATE: Show the plan, then use AskUserQuestion to ask whether to
+   proceed. If the user declines, stop and report.
+3. Delegate to the executor subagent with the approved plan.
+4. Delegate to the verifier subagent.
+5. APPROVAL GATE: Show the verdict, then use AskUserQuestion to ask whether
+   to accept the result. If declined, leave the working tree for manual review.
+```
+
+Invoke it with `/approved-agentic-run Add input validation to signup form`. The `disable-model-invocation: true` flag means only a human can start this workflow — Claude can't trigger it on its own.
+
+Prefer driving from CI or a terminal script? The same gates work headlessly with real CLI flags:
 
 ```bash
 #!/bin/bash
-# .claude/skills/approved_agentic_run.sh
-
+# scripts/approved_run.sh
 TASK="$1"
 RUN_ID="$(date +%Y-%m-%d)-$(echo "$TASK" | tr ' ' '-' | tr '[:upper:]' '[:lower:]' | cut -c1-30)"
 
-# Step 1: Plan
-echo "Running planner..."
-claude-code --agent planner --task "$TASK" --run-id "$RUN_ID"
+# Step 1: Plan (planner agent is read-only via permissionMode: plan)
+claude --agent planner -p "Create a plan for: $TASK. Write it to .claude/runs/$RUN_ID/plan.md"
 
 # Step 2: Approval gate
-echo ""
 echo "=== PLAN ==="
 cat ".claude/runs/$RUN_ID/plan.md"
-echo ""
-read -p "Approve this plan? [y/N] " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Plan rejected. Exiting."
-    exit 1
-fi
+read -p "Approve this plan? [y/N] " -n 1 -r; echo
+[[ ! $REPLY =~ ^[Yy]$ ]] && { echo "Plan rejected. Exiting."; exit 1; }
 
-# Step 3: Execute
-echo "Running executor..."
-claude-code --agent executor \
-  --plan ".claude/runs/$RUN_ID/plan.md" \
-  --run-id "$RUN_ID"
-
-# Step 4: Verify
-echo "Running verifier..."
-claude-code --agent verifier \
-  --execution ".claude/runs/$RUN_ID/execution.md" \
-  --run-id "$RUN_ID"
+# Step 3 & 4: Execute, then verify
+claude --agent executor -p "Execute the plan in .claude/runs/$RUN_ID/plan.md. Log steps to .claude/runs/$RUN_ID/execution.md"
+claude --agent verifier -p "Verify .claude/runs/$RUN_ID/execution.md against the plan. Write verdict to .claude/runs/$RUN_ID/verdict.md"
 
 # Step 5: Approval gate
-echo ""
 echo "=== VERDICT ==="
 cat ".claude/runs/$RUN_ID/verdict.md"
-echo ""
-read -p "Accept this result? [y/N] " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Result rejected. Changes not committed."
-    exit 1
-fi
+read -p "Accept this result? [y/N] " -n 1 -r; echo
+[[ ! $REPLY =~ ^[Yy]$ ]] && { echo "Result rejected. Changes not committed."; exit 1; }
 
 echo "Workflow complete and approved."
 ```
 
-Usage:
-
-```bash
-./claude/skills/approved_agentic_run.sh "Add input validation to signup form"
-
-# Running planner...
-# [planner output]
-#
-# === PLAN ===
-# [plan content]
-#
-# Approve this plan? [y/N] y
-#
-# Running executor...
-# [executor output]
-#
-# Running verifier...
-# [verifier output]
-#
-# === VERDICT ===
-# Verdict: PASS
-# [verdict details]
-#
-# Accept this result? [y/N] y
-#
-# Workflow complete and approved.
-```
-
 ## When to Require Human Approval
 
-Use approval gates for:
+Use `ask` rules for:
 
 **Production deployments:**
 
 ```json
 {
   "permissions": {
-    "require_approval": [
-      "Bash:git push origin main",
-      "Bash:kubectl apply",
-      "Bash:terraform apply"
+    "ask": [
+      "Bash(git push *)",
+      "Bash(kubectl apply *)",
+      "Bash(terraform apply*)"
     ]
   }
 }
@@ -216,25 +196,30 @@ Use approval gates for:
 ```json
 {
   "permissions": {
-    "require_approval": [
-      "Bash:rm -rf",
-      "Bash:DROP TABLE",
-      "Bash:docker system prune"
+    "ask": [
+      "Bash(rm -rf *)",
+      "Bash(docker system prune*)"
+    ],
+    "deny": [
+      "Bash(* DROP TABLE *)"
     ]
   }
 }
 ```
 
-**External API calls:**
+Some things shouldn't be a question at all — put them in `deny`, not `ask`.
+
+**External calls and messaging** (MCP tools use the `mcp__server__tool` rule format):
 
 ```json
 {
   "permissions": {
-    "require_approval": [
-      "Bash:curl",
-      "Bash:wget",
-      "CustomTool:send_email",
-      "CustomTool:post_to_slack"
+    "ask": [
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "WebFetch",
+      "mcp__email__send_email",
+      "mcp__slack__post_message"
     ]
   }
 }
@@ -245,145 +230,67 @@ Use approval gates for:
 ```json
 {
   "permissions": {
-    "require_approval": [
-      "Bash:npm publish",
-      "Bash:aws ec2 run-instances",
-      "CustomTool:train_model"
+    "ask": [
+      "Bash(npm publish*)",
+      "Bash(aws ec2 run-instances *)",
+      "mcp__ml_platform__train_model"
     ]
   }
 }
 ```
 
-## Example: Skill with Approval Gate
-
-Full skill that pauses after planner and shows plan for approval:
+## Example: Skill with Approval Gates at Every Stage
 
 ```markdown
-# .claude/skills/safe-refactor.md
+# .claude/skills/safe-refactor/SKILL.md
+---
+name: safe-refactor
+description: Refactor code with mandatory human approval at each stage
+disable-model-invocation: true
+context: fork
+---
 
-# Safe Refactor
+Refactor the target described in: $ARGUMENTS
 
-Refactor code with mandatory human approval at each stage.
+Current branch state (injected before you start):
+!`git status --short`
 
 ## Process
 
-1. Research: Gather best practices for the refactoring
-2. Plan: Create detailed refactor plan
-3. **APPROVAL REQUIRED**: User reviews plan
-4. Execute: Perform refactoring
-5. Verify: Check correctness and style
-6. **APPROVAL REQUIRED**: User reviews changes
-7. Test: Run full test suite
-8. **APPROVAL REQUIRED**: User commits if all tests pass
+1. Research: delegate to the researcher subagent for refactoring best practices
+2. Plan: delegate to the planner subagent, using the research as context
+3. **APPROVAL REQUIRED**: present research + plan; AskUserQuestion before continuing
+4. Execute: delegate to the executor subagent
+5. Verify: delegate to the verifier subagent; show `git diff` summary + verdict
+6. **APPROVAL REQUIRED**: AskUserQuestion before running the full test suite
+7. Test: run the project test suite
+8. **APPROVAL REQUIRED**: only commit if tests pass AND the user approves
 
 ## Safety
 
-- No step proceeds without user approval
-- All changes are reversible (git)
-- Tests must pass before final approval
+- No stage proceeds without explicit user approval
+- All changes are reversible (git); on rejection, tell the user how to restore
+- Tests must pass before the final approval is even offered
 ```
 
-Implementation:
-
-```bash
-#!/bin/bash
-# .claude/skills/safe_refactor.sh
-
-REFACTOR_TARGET="$1"
-RUN_ID="$(date +%Y-%m-%d)-refactor-$(echo "$REFACTOR_TARGET" | tr ' /' '-' | cut -c1-30)"
-
-echo "Starting safe refactor workflow for: $REFACTOR_TARGET"
-
-# Research
-echo "Step 1: Research"
-claude-code --agent researcher \
-  --query "Best practices for refactoring $REFACTOR_TARGET" \
-  --run-id "$RUN_ID"
-
-# Plan
-echo "Step 2: Plan"
-claude-code --agent planner \
-  --task "Refactor $REFACTOR_TARGET" \
-  --context ".claude/runs/$RUN_ID/research.md" \
-  --run-id "$RUN_ID"
-
-# Approval gate 1
-echo ""
-echo "=== RESEARCH FINDINGS ==="
-cat ".claude/runs/$RUN_ID/research.md"
-echo ""
-echo "=== PROPOSED PLAN ==="
-cat ".claude/runs/$RUN_ID/plan.md"
-echo ""
-read -p "Approve plan? [y/N] " -n 1 -r
-echo
-[[ ! $REPLY =~ ^[Yy]$ ]] && { echo "Aborted."; exit 1; }
-
-# Execute
-echo "Step 3: Execute"
-claude-code --agent executor \
-  --plan ".claude/runs/$RUN_ID/plan.md" \
-  --run-id "$RUN_ID"
-
-# Verify
-echo "Step 4: Verify"
-claude-code --agent verifier \
-  --execution ".claude/runs/$RUN_ID/execution.md" \
-  --run-id "$RUN_ID"
-
-# Approval gate 2
-echo ""
-echo "=== CHANGES MADE ==="
-git diff
-echo ""
-echo "=== VERDICT ==="
-cat ".claude/runs/$RUN_ID/verdict.md"
-echo ""
-read -p "Approve changes? [y/N] " -n 1 -r
-echo
-[[ ! $REPLY =~ ^[Yy]$ ]] && { echo "Changes rejected. Run 'git restore .' to undo."; exit 1; }
-
-# Test
-echo "Step 5: Test"
-npm test
-TEST_RESULT=$?
-
-# Approval gate 3
-if [ $TEST_RESULT -eq 0 ]; then
-    echo ""
-    echo "All tests passed."
-    read -p "Commit changes? [y/N] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        git add .
-        git commit -m "Refactor: $REFACTOR_TARGET (agent-assisted, human-approved)"
-        echo "Committed."
-    else
-        echo "Not committed. Changes staged for manual commit."
-    fi
-else
-    echo ""
-    echo "Tests failed. Changes NOT committed."
-    exit 1
-fi
-```
+Note the `` !`git status --short` `` line — skills can inject live command output into their own context before Claude sees them, so the approval conversation starts from real state, not assumptions.
 
 ## Balancing Autonomy and Control
 
 Too many approval prompts cause fatigue:
 
-```bash
+```
 # Annoying - every single file edit requires approval
-Approve edit to file1.js? [y/N] y
-Approve edit to file2.js? [y/N] y
-Approve edit to file3.js? [y/N] y
-Approve edit to file4.js? [y/N] y
+Allow edit to file1.js? y
+Allow edit to file2.js? y
+Allow edit to file3.js? y
+Allow edit to file4.js? y
 # User stops paying attention and just types 'y'
 ```
 
 Too few prompts increase risk:
 
-```bash
+```
 # Risky - no approval before production deploy
 Deploying to production...
 Deployment complete.
@@ -392,8 +299,8 @@ Deployment complete.
 
 **Good balance:**
 
-- Plan-level approval for non-trivial changes
-- Operation-level approval for risky tools (deploy, delete, external API)
+- Plan-level approval (plan mode) for non-trivial changes
+- Operation-level `ask` rules for risky tools (deploy, delete, external API)
 - Post-verification review for all production changes
 
 **Example configuration:**
@@ -401,20 +308,25 @@ Deployment complete.
 ```json
 {
   "permissions": {
-    "require_approval": [
-      "Bash:git push origin main",
-      "Bash:rm -rf",
-      "Bash:kubectl",
-      "Bash:terraform"
-    ],
-    "auto_approve": [
+    "allow": [
       "Read",
       "Grep",
       "Glob",
-      "Edit:src/**/*.js"
+      "Edit(src/**)",
+      "Bash(npm test)",
+      "Bash(npm run lint)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(rm -rf *)",
+      "Bash(kubectl *)",
+      "Bash(terraform *)"
+    ],
+    "deny": [
+      "Read(//**/.env)"
     ]
   }
 }
 ```
 
-This allows agents to autonomously read and edit source code, but requires approval for deployment and destructive operations.
+This allows agents to autonomously read and edit source code, but requires approval for deployment and destructive operations — and makes secrets a non-question. If prompt fatigue persists, `acceptEdits` mode plus tight `ask`/`deny` rules is usually the right trade: edits flow freely (they're reversible via git), while irreversible operations still stop for a human.

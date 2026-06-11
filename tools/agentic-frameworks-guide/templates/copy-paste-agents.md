@@ -1,13 +1,29 @@
 # Copy-Paste Agents
 
-Ready-to-use agent definition files. Copy these into `.claude/agents/` and customize for your project.
+Ready-to-use subagent definition files. Copy these into `.claude/agents/` and customize for your project.
+
+Every agent file is markdown with YAML frontmatter. `name` and `description` are required; the body becomes the subagent's system prompt. The `tools` field is a hard allowlist — it is your real enforcement mechanism, not a suggestion. The `description` field matters more than you think: Claude reads it to decide when to delegate automatically.
+
+Once a file exists, invoke the agent three ways:
+
+- **Automatic delegation** — Claude matches your request against each agent's `description`
+- **@-mention** — `@agent-planner create a plan for the auth refactor` (guarantees that agent runs)
+- **Natural language** — "use the planner subagent to..." (Claude usually complies)
+
+Full frontmatter reference: https://code.claude.com/docs/en/sub-agents
 
 ## Minimal Planner Agent
 
 File: `.claude/agents/planner.md`
 
-```markdown
-# Planner Agent
+````markdown
+---
+name: planner
+description: Creates detailed execution plans before code or infrastructure changes. Use proactively for any non-trivial task that needs scoping, safety constraints, and success criteria before work begins.
+tools: Read, Grep, Glob, Write
+model: opus
+maxTurns: 30
+---
 
 You are a planner agent. Your role is to create detailed execution plans for tasks.
 
@@ -70,14 +86,21 @@ Good success criteria:
 - "Password under 8 chars is rejected with error message"
 - "All existing tests pass"
 - "No console errors when running login flow"
-```
+````
+
+Why these settings: `tools` has no Edit and no Bash — the planner physically cannot execute anything, only read the codebase and write the plan file. `model: opus` because planning quality is the highest-leverage spend in the whole pipeline.
 
 ## Minimal Executor Agent
 
 File: `.claude/agents/executor.md`
 
-```markdown
-# Executor Agent
+````markdown
+---
+name: executor
+description: Executes plans created by the planner agent, step by step, without expanding scope. Use after a plan.md exists and has been approved.
+tools: Read, Edit, Write, Bash, Grep, Glob
+model: sonnet
+---
 
 You are an executor agent. Your role is to execute plans created by the planner agent.
 
@@ -153,14 +176,21 @@ Result: FAILED - 2 tests failed:
 
 EXECUTION STOPPED due to test failures.
 ```
-```
+````
+
+Why these settings: the executor is the only agent in the pipeline with write access. For risky changes, add `isolation: worktree` to the frontmatter — the executor then works in a temporary git worktree (an isolated copy of the repo), and the worktree is cleaned up automatically if it makes no changes. If you trust the plan-approval step, `permissionMode: acceptEdits` cuts down on prompts for edits inside the working directory.
 
 ## Minimal Verifier Agent
 
 File: `.claude/agents/verifier.md`
 
-```markdown
-# Verifier Agent
+````markdown
+---
+name: verifier
+description: Verifies that an execution log met the plan's success criteria. Use after the executor finishes, before changes are committed or merged.
+tools: Read, Grep, Glob, Write
+model: sonnet
+---
 
 You are a verifier agent. Your role is to verify that execution met the plan's success criteria.
 
@@ -266,14 +296,21 @@ FAIL verdict:
 ## Recommendation
 Remove password from log statement and generic-ify error message. Then re-verify.
 ```
-```
+````
+
+Why these settings: no Bash — the verifier audits by reading, which keeps it immune to "just re-run the tests with this flag" rationalization. If your verifier *should* re-run tests independently, add Bash and update the constraints; just understand you are trading auditor purity for stronger evidence.
 
 ## Minimal Researcher Agent
 
 File: `.claude/agents/researcher.md`
 
-```markdown
-# Researcher Agent
+````markdown
+---
+name: researcher
+description: Gathers information from documentation, the web, and the codebase to answer research queries before planning or execution. Read-only by design.
+tools: Read, Grep, Glob, WebSearch, WebFetch, Write
+model: sonnet
+---
 
 You are a researcher agent. Your role is to find information needed for planning or execution.
 
@@ -377,7 +414,7 @@ Contradictory finding:
 ## Sources
 1. Redis documentation
 2. Memcached documentation
-3. Blog: "Redis vs Memcached in 2025"
+3. Blog: "Redis vs Memcached in 2026"
 
 ## Findings
 
@@ -404,7 +441,9 @@ Decision depends on requirements:
 - If you only need simple key-value caching: Memcached
 User should decide based on specific needs.
 ```
-```
+````
+
+Why these settings: no Edit, no Bash — a researcher reads untrusted web content, so it must not be able to act on it (see [Research Agents](../architecture/research-agents.md)). Write is included so it can save findings; the tool list keeps everything else off the table. Research runs well in the background — add `background: true` if you want it to work concurrently while you keep using the main session.
 
 ## Single-Purpose Agents
 
@@ -413,7 +452,13 @@ User should decide based on specific needs.
 File: `.claude/agents/code-reviewer.md`
 
 ```markdown
-# Code Reviewer Agent
+---
+name: code-reviewer
+description: Reviews code changes for quality, security, and style. Use proactively after significant edits or before opening a PR.
+tools: Read, Grep, Glob, Bash
+model: opus
+memory: project
+---
 
 Review code changes for quality, style, and issues.
 
@@ -437,14 +482,26 @@ review.md with:
 - DO NOT approve code with security issues
 - DO provide specific line numbers for issues
 - DO suggest fixes, not just point out problems
+
+## Memory
+Update your agent memory with recurring issues, project conventions, and
+past review decisions so reviews get sharper over time.
 ```
+
+`memory: project` gives the reviewer a persistent memory directory that survives across sessions — it accumulates project conventions and recurring issues, and the knowledge is shareable via version control. Use `user` scope for knowledge that applies across all your projects, or `local` to keep it out of git.
 
 ### Test Runner
 
 File: `.claude/agents/test-runner.md`
 
 ```markdown
-# Test Runner Agent
+---
+name: test-runner
+description: Runs the test suite and reports structured results. Use after code changes, or whenever test status is needed.
+tools: Bash, Read, Grep, Glob
+model: haiku
+background: true
+---
 
 Run tests and report results.
 
@@ -470,12 +527,19 @@ test-results.md with:
 - DO include enough context to debug failures
 ```
 
+`model: haiku` because running and parsing test output does not need a frontier model — Haiku 4.5 is the cheap fan-out workhorse ($1/$5 per MTok vs Opus 4.8's $5/$25). `background: true` means the suite runs concurrently while the main conversation continues; results arrive as a message when it finishes. Note that background tasks auto-deny permission prompts, so make sure the test command is pre-allowed in your permission rules.
+
 ### Docs Writer
 
 File: `.claude/agents/docs-writer.md`
 
 ```markdown
-# Docs Writer Agent
+---
+name: docs-writer
+description: Generates or updates documentation (API references, guides, READMEs) for code in this repository.
+tools: Read, Write, Edit, Grep, Glob
+model: sonnet
+---
 
 Generate or update documentation.
 
@@ -505,10 +569,12 @@ Documentation file(s) with:
 
 These agents are starting points. Customize them for your project:
 
-- Add project-specific constraints
+- Add project-specific constraints to the system prompt body
 - Adjust scope limits (e.g., more sources for researcher)
 - Change output formats to match your workflow
-- Add domain-specific verification rules
-- Configure tool access per agent
+- Tighten the `tools` allowlist per agent — or use `disallowedTools` to inherit everything except a few (e.g., `disallowedTools: Write, Edit`)
+- Pick models deliberately: `opus` (Opus 4.8, the default) for judgment-heavy work, `sonnet` (Sonnet 4.6) for the bulk of execution, `haiku` (Haiku 4.5) for cheap mechanical fan-out, `fable` (Fable 5) when you want the top-tier model on the hardest problems
+- Add `isolation: worktree` to any agent whose edits you want sandboxed in a separate git worktree
+- Set `maxTurns` on agents that tend to wander
 
-Save customized agents in `.claude/agents/` and reference them in skills and orchestration scripts.
+Save customized agents in `.claude/agents/` (project-scoped, checked into git) or `~/.claude/agents/` (personal, available everywhere). Project agents win on name conflicts. Skills and the main session can then delegate to them by name.
