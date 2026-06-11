@@ -4,108 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Understanding LLMs - Interactive Guide</title>
+    <meta name="description" content="Understand how Large Language Models work through interactive visualizations.">
+    <meta property="og:title" content="Understanding LLMs">
+    <meta property="og:description" content="Understand how Large Language Models work through interactive visualizations.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://learnbyllm.github.io/tools/llm-intuition.html">
+    <meta property="og:image" content="https://learnbyllm.github.io/assets/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/tool-theme.css">
+    <script src="../assets/theme.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-            min-height: 100vh;
-            color: #fff;
-            overflow-x: hidden;
-        }
-
-        .header {
-            text-align: center;
-            padding: 40px 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
-            animation: pulse 10s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 0.8; }
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf, #f093fb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header p {
-            color: #a0a0a0;
-            font-size: 1.2rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .nav-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.4);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-
-        .nav-tab {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-
-        .nav-tab:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .nav-tab.active {
-            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
-        }
+        /* Page-specific styles. Shared reset, body, topbar, header, tabs,
+           cards, buttons and inputs come from ../assets/tool-theme.css */
 
         .container {
-            max-width: 1400px;
+            max-width: 1040px;
             margin: 0 auto;
-            padding: 30px;
+            padding: 30px 24px 60px;
         }
 
         .section {
             display: none;
-            animation: fadeIn 0.5s ease;
+            animation: fadeIn 0.4s ease;
         }
 
         .section.active {
@@ -113,147 +37,119 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .card h2 {
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            color: #00d4ff;
-        }
-
-        .card h3 {
-            font-size: 1.3rem;
-            margin: 25px 0 15px;
-            color: #f093fb;
-        }
-
         .description {
-            color: #b0b0b0;
-            line-height: 1.8;
+            color: var(--text-secondary);
+            line-height: 1.7;
             margin-bottom: 20px;
-            font-size: 1.05rem;
+            font-size: 0.98rem;
         }
 
         .interactive-area {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 30px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
             margin: 20px 0;
         }
 
         .info-box {
-            background: rgba(0, 212, 255, 0.1);
-            border-left: 4px solid #00d4ff;
-            padding: 15px 20px;
-            border-radius: 0 10px 10px 0;
+            background: var(--accent-soft);
+            border-left: 3px solid var(--accent);
+            padding: 14px 18px;
+            border-radius: 0 8px 8px 0;
             margin: 15px 0;
         }
 
         .info-box.warning {
-            background: rgba(255, 193, 7, 0.1);
-            border-left-color: #ffc107;
+            background: rgba(251, 191, 36, 0.08);
+            border-left-color: var(--warn);
         }
 
         .info-box.insight {
-            background: rgba(123, 44, 191, 0.1);
-            border-left-color: #7b2cbf;
+            background: rgba(167, 139, 250, 0.08);
+            border-left-color: #a78bfa;
         }
 
         .info-box h4 {
-            color: #00d4ff;
+            color: var(--accent);
             margin-bottom: 8px;
-        }
-
-        .info-box.warning h4 { color: #ffc107; }
-        .info-box.insight h4 { color: #7b2cbf; }
-
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
             font-size: 0.95rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            color: #fff;
+        .info-box.warning h4 { color: var(--warn); }
+        .info-box.insight h4 { color: #a78bfa; }
+
+        .card button {
+            margin: 4px 8px 4px 0;
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
-
-        .btn-accent {
-            background: linear-gradient(135deg, #7b2cbf, #f093fb);
-            color: #fff;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        input, textarea {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            font-size: 1rem;
+        input[type="text"], textarea {
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 0.9rem;
+            padding: 10px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            background: var(--bg-elevated);
+            color: var(--text);
             width: 100%;
-            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent);
         }
 
         input::placeholder, textarea::placeholder {
-            color: #666;
+            color: var(--text-tertiary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            padding: 0;
+            border: none;
+            background: none;
         }
 
         /* Tokenization Styles */
         .token-display {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
             margin: 20px 0;
             min-height: 60px;
             align-items: center;
         }
 
         .token {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 0.88rem;
+            padding: 7px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            color: var(--text);
             animation: tokenAppear 0.3s ease;
             position: relative;
         }
 
         .token .token-id {
             position: absolute;
-            top: -8px;
-            right: -8px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            color: #00d4ff;
+            top: -9px;
+            right: -9px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-strong);
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            color: var(--text-secondary);
         }
 
         @keyframes tokenAppear {
-            from { transform: scale(0); opacity: 0; }
+            from { transform: scale(0.6); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
 
@@ -272,42 +168,38 @@
         .embedding-vector {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 3px;
             padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             margin-top: 10px;
         }
 
         .embedding-dim {
-            height: 20px;
+            height: 18px;
             border-radius: 3px;
             transition: width 0.5s ease;
         }
 
         /* Attention Visualization */
-        .attention-matrix {
-            display: grid;
-            gap: 5px;
-            margin: 20px auto;
-            width: fit-content;
-        }
-
         .attention-cell {
             width: 50px;
             height: 50px;
-            border-radius: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 0.72rem;
+            color: var(--text);
+            transition: transform 0.2s ease;
             cursor: pointer;
         }
 
         .attention-cell:hover {
-            transform: scale(1.1);
+            transform: scale(1.08);
             z-index: 10;
         }
 
@@ -315,8 +207,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: #888;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            color: var(--text-secondary);
         }
 
         /* Probability Distribution */
@@ -331,82 +223,36 @@
         .prob-bar-container {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
         .prob-word {
             width: 100px;
             text-align: right;
-            font-weight: 600;
-            color: #ccc;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
         }
 
         .prob-bar-wrapper {
             flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 6px;
             overflow: hidden;
-            height: 30px;
+            height: 22px;
         }
 
         .prob-bar {
             height: 100%;
-            border-radius: 10px;
             transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            padding-left: 10px;
-            font-weight: bold;
-            font-size: 0.85rem;
         }
 
-        /* Neural Network Visualization */
-        .nn-container {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 40px 20px;
-            overflow-x: auto;
-        }
-
-        .nn-layer {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .nn-layer-label {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-
-        .nn-neuron {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .prob-val {
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
             font-size: 0.8rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .nn-neuron:hover {
-            transform: scale(1.2);
-            box-shadow: 0 0 20px currentColor;
-        }
-
-        .nn-connections {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
+            color: var(--text);
+            min-width: 56px;
         }
 
         /* Temperature Slider */
@@ -417,70 +263,49 @@
         .slider-container label {
             display: block;
             margin-bottom: 10px;
-            color: #888;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 10px;
-            border-radius: 5px;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf, #f093fb);
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            background: #fff;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
         }
 
         .slider-value {
             text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #00d4ff;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: var(--accent);
             margin-top: 10px;
         }
 
         /* Context Window */
         .context-window {
             display: flex;
-            gap: 5px;
+            gap: 6px;
             flex-wrap: wrap;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            position: relative;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
         }
 
         .context-token {
-            padding: 8px 12px;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 0.82rem;
+            padding: 6px 10px;
             border-radius: 5px;
-            font-size: 0.9rem;
             transition: all 0.3s ease;
         }
 
         .context-token.in-context {
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: var(--text);
         }
 
         .context-token.out-of-context {
-            background: rgba(255, 255, 255, 0.1);
-            color: #666;
-        }
-
-        .context-window-marker {
-            position: absolute;
-            top: -10px;
-            background: #f093fb;
-            padding: 2px 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            color: var(--text-tertiary);
         }
 
         /* Training Visualization */
@@ -489,21 +314,26 @@
             align-items: center;
             gap: 20px;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--bg);
+            border: 1px solid var(--border);
             border-radius: 10px;
             margin: 15px 0;
         }
 
         .training-step-number {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #7b2cbf, #f093fb);
+            width: 44px;
+            height: 44px;
+            flex: none;
+            border-radius: 8px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            color: var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-weight: 500;
+            font-size: 1.05rem;
         }
 
         .training-step-content {
@@ -511,39 +341,43 @@
         }
 
         .training-step-title {
-            font-weight: bold;
-            color: #00d4ff;
+            font-weight: 600;
+            color: var(--text);
             margin-bottom: 5px;
         }
 
         /* Comparison Grid */
         .comparison-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
             margin: 20px 0;
         }
 
         .comparison-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .comparison-item h4 {
-            color: #f093fb;
+            color: var(--text);
             margin-bottom: 10px;
+            font-size: 0.95rem;
         }
 
         /* Generation Animation */
         .generation-display {
-            font-size: 1.2rem;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 1rem;
             line-height: 2;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             min-height: 100px;
+            margin-top: 15px;
         }
 
         .generated-token {
@@ -552,15 +386,15 @@
         }
 
         @keyframes tokenFade {
-            from { opacity: 0; color: #00d4ff; }
-            to { opacity: 1; color: #fff; }
+            from { opacity: 0; color: var(--accent); }
+            to { opacity: 1; color: var(--text); }
         }
 
         .cursor {
             display: inline-block;
-            width: 3px;
+            width: 2px;
             height: 1.2em;
-            background: #00d4ff;
+            background: var(--accent);
             animation: blink 1s infinite;
             vertical-align: middle;
             margin-left: 2px;
@@ -574,56 +408,35 @@
         /* Hallucination Demo */
         .fact-check {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
             gap: 10px;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 8px;
             margin: 10px 0;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--border-strong);
+            cursor: pointer;
         }
 
         .fact-check.correct {
-            background: rgba(56, 239, 125, 0.2);
-            border-left: 4px solid #38ef7d;
+            background: rgba(52, 211, 153, 0.08);
+            border-left-color: var(--ok);
         }
 
         .fact-check.incorrect {
-            background: rgba(255, 107, 107, 0.2);
-            border-left: 4px solid #ff6b6b;
+            background: rgba(248, 113, 113, 0.08);
+            border-left-color: var(--bad);
         }
 
         .fact-check.uncertain {
-            background: rgba(255, 193, 7, 0.2);
-            border-left: 4px solid #ffc107;
+            background: rgba(251, 191, 36, 0.08);
+            border-left-color: var(--warn);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .nav-tabs {
-                padding: 10px;
-            }
-
-            .nav-tab {
-                padding: 8px 16px;
-                font-size: 0.85rem;
-            }
-
-            .container {
-                padding: 15px;
-            }
-
-            .card {
-                padding: 20px;
-            }
-
-            .attention-cell {
-                width: 35px;
-                height: 35px;
-                font-size: 0.6rem;
-            }
+        .fact-explanation {
+            flex-basis: 100%;
         }
 
         /* Flow Diagram */
@@ -631,63 +444,63 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 16px;
             flex-wrap: wrap;
-            padding: 30px;
+            padding: 24px 0;
         }
 
         .flow-step {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(123, 44, 191, 0.2));
-            border: 2px solid rgba(0, 212, 255, 0.5);
-            border-radius: 15px;
-            padding: 20px;
+            background: var(--bg);
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
+            padding: 18px;
             text-align: center;
-            min-width: 150px;
-            transition: all 0.3s ease;
+            min-width: 130px;
+            transition: border-color 0.2s ease, transform 0.2s ease;
         }
 
         .flow-step:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            transform: translateY(-3px);
+            border-color: var(--accent);
         }
 
         .flow-step-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
+            font-size: 1.6rem;
+            margin-bottom: 8px;
         }
 
         .flow-arrow {
-            font-size: 2rem;
-            color: #00d4ff;
+            font-size: 1.4rem;
+            color: var(--text-tertiary);
         }
 
         /* Stats Display */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
             margin: 20px 0;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(123, 44, 191, 0.1));
-            border-radius: 15px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 20px;
             text-align: center;
         }
 
         .stat-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 1.9rem;
+            font-weight: 500;
+            color: var(--accent);
         }
 
         .stat-label {
-            color: #888;
-            margin-top: 5px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-size: 0.85rem;
         }
 
         /* Interactive Prompt */
@@ -705,23 +518,46 @@
 
         .prompt-label {
             min-width: 120px;
-            color: #888;
+            font-family: 'IBM Plex Mono', 'Consolas', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
         }
 
         .prompt-preview {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
             padding: 20px;
             margin-top: 15px;
-            border-left: 4px solid #00d4ff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .attention-cell {
+                width: 35px;
+                height: 35px;
+                font-size: 0.6rem;
+            }
+
+            .prompt-part {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>🧠 Understanding LLMs</h1>
-        <p>An interactive journey into how Large Language Models think and work</p>
-    </header>
+    <nav class="site-topbar"><a href="../index.html" class="wordmark">learnbyllm</a><button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">[theme]</button></nav>
+
+    <header class="tool-header"><p class="tool-kicker">interactive · ai</p><h1>LLM Intuition</h1><p class="tool-sub">An interactive journey into how Large Language Models think and work.</p></header>
 
     <nav class="nav-tabs">
         <button class="nav-tab active" onclick="showSection('overview')">Overview</button>
@@ -844,7 +680,7 @@
                     
                     <div class="token-display" id="tokenDisplay"></div>
                     
-                    <div id="tokenStats" style="color: #888; margin-top: 10px;"></div>
+                    <div id="tokenStats" style="color: var(--text-secondary); margin-top: 10px;"></div>
                 </div>
 
                 <h3>🎨 Token Types</h3>
@@ -852,31 +688,31 @@
                     <div class="comparison-item">
                         <h4>Common Words</h4>
                         <p>Words like "the", "is", "and" are usually single tokens because they appear so often.</p>
-                        <div class="token" style="background: linear-gradient(135deg, #38ef7d, #11998e); display: inline-block; margin-top: 10px;">the</div>
+                        <div class="token" style="background: rgba(52, 211, 153, 0.15); display: inline-block; margin-top: 10px;">the</div>
                     </div>
                     <div class="comparison-item">
                         <h4>Word Pieces</h4>
                         <p>Longer or rare words get split: "unbelievable" → "un" + "believ" + "able"</p>
                         <div style="margin-top: 10px;">
-                            <span class="token" style="background: linear-gradient(135deg, #667eea, #764ba2); display: inline-block;">un</span>
-                            <span class="token" style="background: linear-gradient(135deg, #f093fb, #f5576c); display: inline-block;">believ</span>
-                            <span class="token" style="background: linear-gradient(135deg, #4facfe, #00f2fe); display: inline-block;">able</span>
+                            <span class="token" style="background: rgba(56, 189, 248, 0.15); display: inline-block;">un</span>
+                            <span class="token" style="background: rgba(167, 139, 250, 0.15); display: inline-block;">believ</span>
+                            <span class="token" style="background: rgba(52, 211, 153, 0.15); display: inline-block;">able</span>
                         </div>
                     </div>
                     <div class="comparison-item">
                         <h4>Special Characters</h4>
                         <p>Punctuation and spaces are often separate tokens.</p>
                         <div style="margin-top: 10px;">
-                            <span class="token" style="background: linear-gradient(135deg, #fa709a, #fee140); display: inline-block;">!</span>
-                            <span class="token" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb); display: inline-block;">?</span>
+                            <span class="token" style="background: rgba(251, 191, 36, 0.15); display: inline-block;">!</span>
+                            <span class="token" style="background: rgba(248, 113, 113, 0.15); display: inline-block;">?</span>
                         </div>
                     </div>
                     <div class="comparison-item">
                         <h4>Numbers & Code</h4>
                         <p>Numbers and code often get split into individual digits or characters.</p>
                         <div style="margin-top: 10px;">
-                            <span class="token" style="background: linear-gradient(135deg, #ff6b6b, #ffa500); display: inline-block;">202</span>
-                            <span class="token" style="background: linear-gradient(135deg, #00d4ff, #0099cc); display: inline-block;">4</span>
+                            <span class="token" style="background: rgba(248, 113, 113, 0.15); display: inline-block;">202</span>
+                            <span class="token" style="background: rgba(56, 189, 248, 0.15); display: inline-block;">4</span>
                         </div>
                     </div>
                 </div>
@@ -906,7 +742,7 @@
 
                 <div class="interactive-area">
                     <h3>🧪 Explore Word Similarity</h3>
-                    <p style="color: #888; margin-bottom: 15px;">Click on words to see their "embedding" and find similar words:</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Click on words to see their "embedding" and find similar words:</p>
                     
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
                         <button class="btn-secondary" onclick="showEmbedding('king')">👑 King</button>
@@ -928,8 +764,8 @@
 
                 <h3>🎯 Visualizing Embedding Space (2D Simplified)</h3>
                 <div class="interactive-area">
-                    <canvas id="embeddingCanvas" width="600" height="400" style="width: 100%; background: rgba(0,0,0,0.3); border-radius: 10px;"></canvas>
-                    <p style="color: #888; margin-top: 10px; text-align: center;">
+                    <canvas id="embeddingCanvas" width="600" height="400" style="width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px;"></canvas>
+                    <p style="color: var(--text-secondary); margin-top: 10px; text-align: center;">
                         Similar words cluster together. Real embeddings have hundreds of dimensions, not just 2!
                     </p>
                 </div>
@@ -969,7 +805,7 @@
 
                 <div class="interactive-area">
                     <h3>🧪 Interactive Attention Visualization</h3>
-                    <p style="color: #888; margin-bottom: 15px;">See how words attend to each other. Brighter = more attention. Click a word to see what it focuses on:</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">See how words attend to each other. Brighter = more attention. Click a word to see what it focuses on:</p>
                     
                     <div style="margin-bottom: 20px;">
                         <button class="btn-secondary" onclick="setAttentionSentence('The cat sat on the mat')">The cat sat on the mat</button>
@@ -983,7 +819,7 @@
                         <div id="attentionMatrix"></div>
                     </div>
                     
-                    <div id="attentionExplanation" style="margin-top: 20px; text-align: center; color: #888;"></div>
+                    <div id="attentionExplanation" style="margin-top: 20px; text-align: center; color: var(--text-secondary);"></div>
                 </div>
 
                 <h3>🔄 Self-Attention Explained</h3>
@@ -991,17 +827,17 @@
                     <div class="comparison-item">
                         <h4>Query (Q)</h4>
                         <p>"What am I looking for?"</p>
-                        <p style="color: #888; font-size: 0.9rem;">Each word asks a question about what information it needs.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Each word asks a question about what information it needs.</p>
                     </div>
                     <div class="comparison-item">
                         <h4>Key (K)</h4>
                         <p>"What do I contain?"</p>
-                        <p style="color: #888; font-size: 0.9rem;">Each word advertises what information it can provide.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Each word advertises what information it can provide.</p>
                     </div>
                     <div class="comparison-item">
                         <h4>Value (V)</h4>
                         <p>"Here's my information"</p>
-                        <p style="color: #888; font-size: 0.9rem;">The actual content that gets passed along if attention is high.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">The actual content that gets passed along if attention is high.</p>
                     </div>
                 </div>
 
@@ -1013,22 +849,22 @@
                     <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
                         <div class="flow-step" style="min-width: 120px;">
                             <div>Head 1</div>
-                            <div style="font-size: 0.8rem; color: #888;">Syntax</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Syntax</div>
                         </div>
                         <div class="flow-step" style="min-width: 120px;">
                             <div>Head 2</div>
-                            <div style="font-size: 0.8rem; color: #888;">Coreference</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Coreference</div>
                         </div>
                         <div class="flow-step" style="min-width: 120px;">
                             <div>Head 3</div>
-                            <div style="font-size: 0.8rem; color: #888;">Semantics</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Semantics</div>
                         </div>
                         <div class="flow-step" style="min-width: 120px;">
                             <div>Head 4</div>
-                            <div style="font-size: 0.8rem; color: #888;">Position</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Position</div>
                         </div>
                     </div>
-                    <p style="text-align: center; color: #888; margin-top: 15px;">
+                    <p style="text-align: center; color: var(--text-secondary); margin-top: 15px;">
                         GPT-4 has 96 attention heads per layer!
                     </p>
                 </div>
@@ -1046,7 +882,7 @@
 
                 <div class="interactive-area">
                     <h3>🧪 See Next-Word Probabilities</h3>
-                    <p style="color: #888; margin-bottom: 15px;">Type a partial sentence and see what the model might predict next:</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Type a partial sentence and see what the model might predict next:</p>
                     
                     <input type="text" id="predictionInput" placeholder="Type a sentence..." value="The capital of France is">
                     <button class="btn-primary" onclick="showPrediction()" style="margin-top: 10px;">Show Predictions</button>
@@ -1068,7 +904,7 @@
                 
                 <div class="interactive-area">
                     <h3>🧪 Softmax Visualization</h3>
-                    <p style="color: #888; margin-bottom: 15px;">Adjust the raw scores (logits) and see how softmax converts them to probabilities:</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Adjust the raw scores (logits) and see how softmax converts them to probabilities:</p>
                     
                     <div id="softmaxSliders">
                         <div style="margin-bottom: 15px;">
@@ -1144,7 +980,7 @@
                         <span id="generatedText"></span><span class="cursor" id="generationCursor" style="display: none;"></span>
                     </div>
                     
-                    <div id="generationStats" style="margin-top: 15px; color: #888;"></div>
+                    <div id="generationStats" style="margin-top: 15px; color: var(--text-secondary);"></div>
                 </div>
 
                 <h3>🎯 Sampling Strategies</h3>
@@ -1187,7 +1023,7 @@
                         <div class="slider-value" id="tempValue">1.0</div>
                     </div>
                     
-                    <div style="display: flex; justify-content: space-between; color: #888; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; color: var(--text-secondary); margin-bottom: 20px;">
                         <span>🎯 Focused/Deterministic</span>
                         <span>🎨 Creative/Random</span>
                     </div>
@@ -1204,17 +1040,17 @@
                     <div class="comparison-item">
                         <h4>🥶 Low (0.1-0.3)</h4>
                         <p>Very predictable, always picks the "safe" answer. Good for factual tasks.</p>
-                        <p style="color: #00d4ff; margin-top: 10px;">Best for: Code, facts, translation</p>
+                        <p style="color: var(--accent); margin-top: 10px;">Best for: Code, facts, translation</p>
                     </div>
                     <div class="comparison-item">
                         <h4>😊 Medium (0.7-1.0)</h4>
                         <p>Balanced - some creativity while staying coherent. The default sweet spot.</p>
-                        <p style="color: #00d4ff; margin-top: 10px;">Best for: General conversation, writing</p>
+                        <p style="color: var(--accent); margin-top: 10px;">Best for: General conversation, writing</p>
                     </div>
                     <div class="comparison-item">
                         <h4>🔥 High (1.5-2.0)</h4>
                         <p>Very creative and surprising, but may become incoherent or nonsensical.</p>
-                        <p style="color: #00d4ff; margin-top: 10px;">Best for: Brainstorming, poetry, humor</p>
+                        <p style="color: var(--accent); margin-top: 10px;">Best for: Brainstorming, poetry, humor</p>
                     </div>
                 </div>
 
@@ -1265,14 +1101,14 @@
                     </div>
                     
                     <div id="contextWindowDemo" style="margin-top: 20px;">
-                        <p style="color: #888; margin-bottom: 10px;">The conversation so far:</p>
+                        <p style="color: var(--text-secondary); margin-bottom: 10px;">The conversation so far:</p>
                         <div class="context-window" id="contextTokens"></div>
                     </div>
                     
                     <button class="btn-primary" onclick="addToContext()" style="margin-top: 15px;">Add More Text</button>
                     <button class="btn-secondary" onclick="resetContext()">Reset</button>
                     
-                    <div id="contextExplanation" style="margin-top: 15px; color: #888;"></div>
+                    <div id="contextExplanation" style="margin-top: 15px; color: var(--text-secondary);"></div>
                 </div>
 
                 <h3>🤔 Why Context Limits Matter</h3>
@@ -1312,9 +1148,9 @@
                     <div class="training-step-number">1</div>
                     <div class="training-step-content">
                         <div class="training-step-title">Pre-training: Learning Language</div>
-                        <p style="color: #888;">The model reads BILLIONS of words from the internet, books, code, etc. 
+                        <p style="color: var(--text-secondary);">The model reads BILLIONS of words from the internet, books, code, etc. 
                         It learns to predict the next word, absorbing grammar, facts, and patterns.</p>
-                        <p style="color: #00d4ff; margin-top: 5px;">Duration: Weeks to months | Cost: Millions of dollars</p>
+                        <p style="color: var(--accent); margin-top: 5px;">Duration: Weeks to months | Cost: Millions of dollars</p>
                     </div>
                 </div>
 
@@ -1322,9 +1158,9 @@
                     <div class="training-step-number">2</div>
                     <div class="training-step-content">
                         <div class="training-step-title">Supervised Fine-tuning (SFT)</div>
-                        <p style="color: #888;">Humans write high-quality example conversations. The model learns 
+                        <p style="color: var(--text-secondary);">Humans write high-quality example conversations. The model learns 
                         to mimic this style - being helpful, following instructions, etc.</p>
-                        <p style="color: #00d4ff; margin-top: 5px;">Duration: Days | Examples: ~100,000</p>
+                        <p style="color: var(--accent); margin-top: 5px;">Duration: Days | Examples: ~100,000</p>
                     </div>
                 </div>
 
@@ -1332,22 +1168,22 @@
                     <div class="training-step-number">3</div>
                     <div class="training-step-content">
                         <div class="training-step-title">RLHF: Learning Preferences</div>
-                        <p style="color: #888;">Humans rank different model outputs from best to worst. 
+                        <p style="color: var(--text-secondary);">Humans rank different model outputs from best to worst. 
                         The model learns what humans prefer through reinforcement learning.</p>
-                        <p style="color: #00d4ff; margin-top: 5px;">This is what makes ChatGPT feel "aligned" with human values</p>
+                        <p style="color: var(--accent); margin-top: 5px;">This is what makes ChatGPT feel "aligned" with human values</p>
                     </div>
                 </div>
 
                 <div class="interactive-area">
                     <h3>🧪 See Pre-training in Action</h3>
-                    <p style="color: #888; margin-bottom: 15px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
                         The model sees text with a word hidden and tries to predict it. 
                         Click "Train" to see how it improves:
                     </p>
                     
                     <div id="trainingDemo">
                         <div style="font-size: 1.2rem; margin-bottom: 15px;">
-                            "The cat sat on the <span id="maskedWord" style="background: #7b2cbf; padding: 5px 15px; border-radius: 5px;">???</span>"
+                            "The cat sat on the <span id="maskedWord" style="background: var(--accent); color: var(--bg); font-family: 'IBM Plex Mono', monospace; padding: 5px 15px; border-radius: 5px;">???</span>"
                         </div>
                         
                         <div id="trainingPredictions" style="margin-bottom: 15px;"></div>
@@ -1356,9 +1192,9 @@
                         <button class="btn-secondary" onclick="resetTraining()">Reset</button>
                         
                         <div id="trainingProgress" style="margin-top: 15px;">
-                            <div style="color: #888;">Training steps: <span id="stepCount">0</span></div>
-                            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 10px;">
-                                <div id="trainingBar" style="height: 10px; width: 0%; background: linear-gradient(90deg, #00d4ff, #7b2cbf); transition: width 0.3s;"></div>
+                            <div style="color: var(--text-secondary);">Training steps: <span id="stepCount">0</span></div>
+                            <div style="background: var(--bg-hover); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-top: 10px;">
+                                <div id="trainingBar" style="height: 10px; width: 0%; background: var(--accent); transition: width 0.3s;"></div>
                             </div>
                         </div>
                     </div>
@@ -1411,7 +1247,7 @@
                 
                 <div class="interactive-area">
                     <h3>🧪 Spot the Hallucination</h3>
-                    <p style="color: #888; margin-bottom: 15px;">Can you identify which "facts" are real vs hallucinated?</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Can you identify which "facts" are real vs hallucinated?</p>
                     
                     <div id="hallucinationQuiz">
                         <div class="fact-check" id="fact1" onclick="revealFact(1)">
@@ -1437,18 +1273,18 @@
 
                 <h3>🧮 Math & Logic Failures</h3>
                 <div class="interactive-area">
-                    <p style="color: #888; margin-bottom: 15px;">LLMs often fail at problems requiring precise calculation:</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">LLMs often fail at problems requiring precise calculation:</p>
                     
                     <div class="comparison-grid">
                         <div class="comparison-item">
                             <h4>Easy for LLMs ✅</h4>
                             <p>"What is 2 + 2?"</p>
-                            <p style="color: #38ef7d;">Answer: 4</p>
+                            <p style="color: var(--ok);">Answer: 4</p>
                         </div>
                         <div class="comparison-item">
                             <h4>Hard for LLMs ❌</h4>
                             <p>"What is 7,849 × 6,523?"</p>
-                            <p style="color: #ff6b6b;">Often wrong!</p>
+                            <p style="color: var(--bad);">Often wrong!</p>
                         </div>
                     </div>
                     
@@ -1530,7 +1366,7 @@
                     <button class="btn-primary" onclick="runPlayground()" style="margin-top: 20px;">🚀 Generate Response</button>
                     
                     <div class="prompt-preview" id="playgroundOutput" style="margin-top: 20px;">
-                        <p style="color: #888;">Response will appear here...</p>
+                        <p style="color: var(--text-secondary);">Response will appear here...</p>
                     </div>
                     
                     <div id="playgroundProcess" style="margin-top: 20px;"></div>
@@ -1538,27 +1374,27 @@
 
                 <h3>🧠 What You've Learned</h3>
                 <div class="comparison-grid">
-                    <div class="comparison-item" style="border-color: #00d4ff;">
+                    <div class="comparison-item" style="border-color: var(--accent);">
                         <h4>✅ Tokenization</h4>
                         <p>Text gets broken into tokens before processing.</p>
                     </div>
-                    <div class="comparison-item" style="border-color: #7b2cbf;">
+                    <div class="comparison-item" style="border-color: #a78bfa;">
                         <h4>✅ Embeddings</h4>
                         <p>Tokens become number vectors that capture meaning.</p>
                     </div>
-                    <div class="comparison-item" style="border-color: #f093fb;">
+                    <div class="comparison-item" style="border-color: #fbbf24;">
                         <h4>✅ Attention</h4>
                         <p>The model decides which words to focus on for each output.</p>
                     </div>
-                    <div class="comparison-item" style="border-color: #38ef7d;">
+                    <div class="comparison-item" style="border-color: #34d399;">
                         <h4>✅ Prediction</h4>
                         <p>Probabilities assigned to all possible next tokens.</p>
                     </div>
-                    <div class="comparison-item" style="border-color: #fee140;">
+                    <div class="comparison-item" style="border-color: #38bdf8;">
                         <h4>✅ Temperature</h4>
                         <p>Controls creativity vs. predictability in sampling.</p>
                     </div>
-                    <div class="comparison-item" style="border-color: #ff6b6b;">
+                    <div class="comparison-item" style="border-color: #f87171;">
                         <h4>✅ Limitations</h4>
                         <p>Pattern matching, not true understanding. Verify facts!</p>
                     </div>
@@ -1592,16 +1428,20 @@
         }
 
         // ==================== TOKENIZATION ====================
+        // Theme-safe transparent tints for token chips (text stays var(--text))
         const tokenColors = [
-            'linear-gradient(135deg, #667eea, #764ba2)',
-            'linear-gradient(135deg, #f093fb, #f5576c)',
-            'linear-gradient(135deg, #4facfe, #00f2fe)',
-            'linear-gradient(135deg, #43e97b, #38f9d7)',
-            'linear-gradient(135deg, #fa709a, #fee140)',
-            'linear-gradient(135deg, #a18cd1, #fbc2eb)',
-            'linear-gradient(135deg, #ff6b6b, #ffa500)',
-            'linear-gradient(135deg, #11998e, #38ef7d)'
+            'rgba(56, 189, 248, 0.15)',
+            'rgba(167, 139, 250, 0.15)',
+            'rgba(52, 211, 153, 0.15)',
+            'rgba(251, 191, 36, 0.15)',
+            'rgba(248, 113, 113, 0.15)',
+            'rgba(56, 189, 248, 0.28)',
+            'rgba(167, 139, 250, 0.28)',
+            'rgba(52, 211, 153, 0.28)'
         ];
+
+        // Theme-safe mid-tone solids for bars and data viz
+        const barColors = ['#38bdf8', '#a78bfa', '#34d399', '#fbbf24', '#f87171', '#38bdf8', '#a78bfa', '#34d399'];
 
         function tokenize() {
             const text = document.getElementById('tokenInput').value;
@@ -1727,11 +1567,11 @@
                     <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">${word}</div>
                     <div class="embedding-vector">
                         ${data.vec.map((v, i) => `
-                            <div class="embedding-dim" style="width: ${v * 100}px; background: ${tokenColors[i]};">
+                            <div class="embedding-dim" style="width: ${v * 100}px; background: ${barColors[i]};">
                             </div>
                         `).join('')}
                     </div>
-                    <div style="color: #888; font-size: 0.8rem; margin-top: 5px;">
+                    <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 5px;">
                         [${data.vec.map(v => v.toFixed(2)).join(', ')}]
                     </div>
                 </div>
@@ -1740,7 +1580,7 @@
             similar.innerHTML = `
                 <div class="info-box">
                     <h4>Similar Words (by embedding distance)</h4>
-                    <p>${data.similar.map(w => `<span style="background: rgba(0,212,255,0.2); padding: 5px 10px; border-radius: 5px; margin: 3px; display: inline-block;">${w}</span>`).join('')}</p>
+                    <p>${data.similar.map(w => `<span style="background: rgba(56, 189, 248, 0.15); color: var(--text); font-family: 'IBM Plex Mono', monospace; padding: 5px 10px; border-radius: 5px; margin: 3px; display: inline-block;">${w}</span>`).join('')}</p>
                 </div>
             `;
         }
@@ -1751,9 +1591,12 @@
             
             canvas.width = canvas.offsetWidth;
             canvas.height = 400;
-            
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const rootStyle = getComputedStyle(document.documentElement);
+            const themeText = rootStyle.getPropertyValue('--text').trim() || '#ededf0';
+            const themeMuted = rootStyle.getPropertyValue('--text-secondary').trim() || '#9b9ba4';
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Word positions in 2D (simplified from high-dimensional)
             const positions = {
@@ -1771,10 +1614,10 @@
             
             // Draw clusters
             const clusters = [
-                { words: ['king', 'queen', 'man', 'woman'], color: 'rgba(123, 44, 191, 0.2)', label: 'People' },
-                { words: ['dog', 'cat'], color: 'rgba(0, 212, 255, 0.2)', label: 'Animals' },
-                { words: ['computer', 'phone'], color: 'rgba(56, 239, 125, 0.2)', label: 'Technology' },
-                { words: ['happy', 'sad'], color: 'rgba(250, 112, 154, 0.2)', label: 'Emotions' }
+                { words: ['king', 'queen', 'man', 'woman'], color: 'rgba(167, 139, 250, 0.15)', label: 'People' },
+                { words: ['dog', 'cat'], color: 'rgba(56, 189, 248, 0.15)', label: 'Animals' },
+                { words: ['computer', 'phone'], color: 'rgba(52, 211, 153, 0.15)', label: 'Technology' },
+                { words: ['happy', 'sad'], color: 'rgba(248, 113, 113, 0.15)', label: 'Emotions' }
             ];
             
             clusters.forEach(cluster => {
@@ -1791,8 +1634,8 @@
                 ctx.fillStyle = cluster.color;
                 ctx.fill();
                 
-                ctx.fillStyle = '#888';
-                ctx.font = '12px Segoe UI';
+                ctx.fillStyle = themeMuted;
+                ctx.font = '12px "IBM Plex Mono", monospace';
                 ctx.textAlign = 'center';
                 ctx.fillText(cluster.label, centerX, centerY - 60);
             });
@@ -1803,18 +1646,18 @@
                 const y = pos.y * canvas.height;
                 
                 ctx.beginPath();
-                ctx.arc(x, y, 8, 0, Math.PI * 2);
-                ctx.fillStyle = '#00d4ff';
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#38bdf8';
                 ctx.fill();
-                
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 14px Segoe UI';
+
+                ctx.fillStyle = themeText;
+                ctx.font = '500 13px "IBM Plex Mono", monospace';
                 ctx.textAlign = 'center';
                 ctx.fillText(word, x, y - 15);
             });
             
             // Draw relationship arrow (king - man + woman = queen)
-            ctx.strokeStyle = '#f093fb';
+            ctx.strokeStyle = '#a78bfa';
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
             
@@ -1834,8 +1677,8 @@
 
         function setAttentionSentence(sentence) {
             currentAttentionWords = sentence.split(' ');
-            document.getElementById('attentionSentence').innerHTML = currentAttentionWords.map((w, i) => 
-                `<span style="cursor: pointer; padding: 5px 10px; border-radius: 5px; background: rgba(0,212,255,0.2); margin: 3px;" onclick="highlightAttention(${i})">${w}</span>`
+            document.getElementById('attentionSentence').innerHTML = currentAttentionWords.map((w, i) =>
+                `<span style="cursor: pointer; padding: 5px 10px; border-radius: 5px; background: rgba(56, 189, 248, 0.15); color: var(--text); font-family: 'IBM Plex Mono', monospace; margin: 3px;" onclick="highlightAttention(${i})">${w}</span>`
             ).join(' ');
             
             renderAttentionMatrix();
@@ -1861,8 +1704,8 @@
                 html += `<div class="attention-label" style="font-size: 0.75rem;">${currentAttentionWords[i]}</div>`;
                 for (let j = 0; j < n; j++) {
                     const weight = attention[i][j];
-                    const intensity = Math.floor(weight * 255);
-                    const color = `rgb(${intensity}, ${Math.floor(intensity * 0.5)}, ${255 - intensity})`;
+                    const alpha = Math.min(0.9, 0.05 + weight * 1.4).toFixed(2);
+                    const color = `rgba(56, 189, 248, ${alpha})`;
                     html += `<div class="attention-cell" style="background: ${color};" 
                              title="${currentAttentionWords[i]} → ${currentAttentionWords[j]}: ${weight.toFixed(2)}"
                              onclick="explainAttention(${i}, ${j}, ${weight.toFixed(2)})">${weight.toFixed(1)}</div>`;
@@ -1988,16 +1831,15 @@
             }
             
             display.innerHTML = `
-                <p style="color: #888; margin-bottom: 15px;">Probability distribution for next token:</p>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">Probability distribution for next token:</p>
                 <div class="prob-container">
                     ${predictions.map((p, i) => `
                         <div class="prob-bar-container">
                             <div class="prob-word">${p.word}</div>
                             <div class="prob-bar-wrapper">
-                                <div class="prob-bar" style="width: ${p.prob * 100}%; background: ${tokenColors[i % tokenColors.length]};">
-                                    ${(p.prob * 100).toFixed(1)}%
-                                </div>
+                                <div class="prob-bar" style="width: ${p.prob * 100}%; background: ${barColors[i % barColors.length]};"></div>
                             </div>
+                            <div class="prob-val">${(p.prob * 100).toFixed(1)}%</div>
                         </div>
                     `).join('')}
                 </div>
@@ -2029,10 +1871,9 @@
                 <div class="prob-bar-container">
                     <div class="prob-word">${words[i]}</div>
                     <div class="prob-bar-wrapper">
-                        <div class="prob-bar" style="width: ${p * 100}%; background: ${tokenColors[i]};">
-                            ${(p * 100).toFixed(1)}%
-                        </div>
+                        <div class="prob-bar" style="width: ${p * 100}%; background: ${barColors[i]};"></div>
                     </div>
+                    <div class="prob-val">${(p * 100).toFixed(1)}%</div>
                 </div>
             `).join('');
         }
@@ -2112,10 +1953,9 @@
                 <div class="prob-bar-container">
                     <div class="prob-word">${words[i]}</div>
                     <div class="prob-bar-wrapper">
-                        <div class="prob-bar" style="width: ${p * 100}%; background: ${tokenColors[i]};">
-                            ${(p * 100).toFixed(1)}%
-                        </div>
+                        <div class="prob-bar" style="width: ${p * 100}%; background: ${barColors[i]};"></div>
                     </div>
+                    <div class="prob-val">${(p * 100).toFixed(1)}%</div>
                 </div>
             `).join('');
             
@@ -2219,12 +2059,11 @@
                 <div class="prob-container">
                     ${sorted.map(([word, prob], i) => `
                         <div class="prob-bar-container">
-                            <div class="prob-word" style="${word === 'mat' ? 'color: #38ef7d;' : ''}">${word}</div>
+                            <div class="prob-word" style="${word === 'mat' ? 'color: var(--ok);' : ''}">${word}</div>
                             <div class="prob-bar-wrapper">
-                                <div class="prob-bar" style="width: ${prob * 100}%; background: ${word === 'mat' ? 'linear-gradient(135deg, #38ef7d, #11998e)' : tokenColors[i]};">
-                                    ${(prob * 100).toFixed(1)}%
-                                </div>
+                                <div class="prob-bar" style="width: ${prob * 100}%; background: ${word === 'mat' ? '#34d399' : barColors[i % barColors.length]};"></div>
                             </div>
+                            <div class="prob-val">${(prob * 100).toFixed(1)}%</div>
                         </div>
                     `).join('')}
                 </div>
@@ -2250,7 +2089,7 @@
             if (!el.querySelector('.fact-explanation')) {
                 const exp = document.createElement('div');
                 exp.className = 'fact-explanation';
-                exp.style.cssText = 'margin-top: 10px; font-size: 0.9rem; color: #888;';
+                exp.style.cssText = 'margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary);';
                 exp.textContent = data.explanation;
                 el.appendChild(exp);
             }
@@ -2299,7 +2138,7 @@
                 '✅ Generation complete!'
             ];
             
-            output.innerHTML = '<p style="color: #888;">Processing...</p>';
+            output.innerHTML = '<p style="color: var(--text-secondary);">Processing...</p>';
             
             for (let i = 0; i < steps.length; i++) {
                 process.innerHTML = `<div class="info-box"><p>${steps[i]}</p></div>`;
@@ -2341,6 +2180,15 @@
                 drawEmbeddingSpace();
             }
         };
+
+        // Redraw the embedding canvas after a theme switch so labels stay readable
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            requestAnimationFrame(function() {
+                if (document.getElementById('embeddings').classList.contains('active')) {
+                    drawEmbeddingSpace();
+                }
+            });
+        });
     </script>
 </body>
 </html>

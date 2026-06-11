@@ -4,271 +4,422 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Learning Tools</title>
+  <title>LearnbyLLM — Interactive Learning Tools</title>
+  <meta name="description"
+    content="Interactive visualizations and guides for understanding complex concepts — LLMs, transformers, data structures, agents, and more.">
+
+  <!-- Open Graph / social sharing -->
+  <meta property="og:title" content="LearnbyLLM — Interactive Learning Tools">
+  <meta property="og:description"
+    content="Interactive visualizations and guides for understanding complex concepts — LLMs, transformers, data structures, agents, and more.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://learnbyllm.github.io/">
+  <meta property="og:image" content="https://learnbyllm.github.io/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
+  <!-- Set theme before paint to avoid a flash of the wrong theme -->
+  <script>
+    document.documentElement.dataset.theme =
+      localStorage.getItem('theme') ||
+      (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  </script>
+
   <style>
+    :root,
+    [data-theme="dark"] {
+      --bg: #0a0a0c;
+      --bg-hover: #121216;
+      --border: #232329;
+      --border-strong: #3a3a42;
+      --text: #ededf0;
+      --text-secondary: #9b9ba4;
+      --text-tertiary: #62626c;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.09);
+    }
+
+    [data-theme="light"] {
+      --bg: #fbfbfa;
+      --bg-hover: #f3f3f1;
+      --border: #e6e6e2;
+      --border-strong: #cfcfc9;
+      --text: #1a1a1c;
+      --text-secondary: #57575e;
+      --text-tertiary: #9a9aa0;
+      --accent: #0284c7;
+      --accent-soft: rgba(2, 132, 199, 0.07);
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    ::selection {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
       min-height: 100vh;
-      color: #fff;
-      padding: 40px 20px;
+      color: var(--text);
+      transition: background 0.25s ease, color 0.25s ease;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', 'Consolas', monospace;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 760px;
       margin: 0 auto;
+      padding: 0 24px 64px;
     }
 
-    header {
-      text-align: center;
-      margin-bottom: 50px;
+    .topbar {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 26px 0;
+      margin-bottom: 64px;
+    }
+
+    .wordmark {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .wordmark::before {
+      content: '~/';
+      color: var(--text-tertiary);
+    }
+
+    .wordmark::after {
+      content: '_';
+      color: var(--accent);
+      animation: blink 1.2s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .theme-toggle {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      border: none;
+      background: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: 4px 0;
+      transition: color 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      color: var(--accent);
     }
 
     h1 {
-      font-size: 2.8rem;
-      margin-bottom: 10px;
-      background: linear-gradient(90deg, #00d4ff, #7b2cbf, #f093fb);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 2.1rem;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      line-height: 1.2;
+      margin-bottom: 18px;
+      max-width: 600px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
     }
 
     .subtitle {
-      color: #888;
-      font-size: 1.1rem;
+      color: var(--text-secondary);
+      font-size: 0.98rem;
+      line-height: 1.65;
+      margin-bottom: 56px;
+      max-width: 540px;
     }
 
-    .stats {
+    /* ---------- search + filters ---------- */
+    .toolbar {
       display: flex;
-      justify-content: center;
-      gap: 50px;
-      margin-bottom: 40px;
-    }
-
-    .stat {
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: #00d4ff;
-    }
-
-    .stat-label {
-      color: #666;
-      font-size: 0.9rem;
-    }
-
-    .tools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      align-items: baseline;
+      justify-content: space-between;
       gap: 20px;
-    }
-
-    .tool-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 25px;
-      text-decoration: none;
-      color: #fff;
-      transition: all 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .tool-card:hover {
-      transform: translateY(-5px);
-      border-color: #00d4ff;
-      box-shadow: 0 15px 40px rgba(0, 212, 255, 0.2);
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .tool-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-    }
-
-    .tool-name {
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
-
-    .tool-description {
-      color: #888;
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
-    .tool-meta {
-      margin-top: auto;
-      padding-top: 15px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 0.8rem;
-      color: #666;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 60px;
-      color: #888;
-    }
-
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #00d4ff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .error {
-      text-align: center;
-      padding: 40px;
-      color: #ff6b6b;
-      background: rgba(255, 107, 107, 0.1);
-      border-radius: 12px;
-    }
-
-    .search-container {
-      margin-bottom: 20px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-strong);
+      padding-bottom: 14px;
+      margin-bottom: 0;
     }
 
     .tag-filters {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 30px;
+      gap: 18px;
     }
 
     .tag-chip {
-      padding: 8px 18px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 50px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #aaa;
-      font-size: 0.85rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
       cursor: pointer;
-      transition: all 0.25s ease;
       user-select: none;
+      padding: 2px 0;
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s ease;
     }
 
     .tag-chip:hover {
-      border-color: #00d4ff;
-      color: #fff;
+      color: var(--text);
     }
 
     .tag-chip.active {
-      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-      border-color: transparent;
-      color: #fff;
-      font-weight: 600;
+      color: var(--accent);
+      border-bottom-color: var(--accent);
     }
 
-    .tool-tags {
+    .search-wrap {
+      flex: 1;
+      min-width: 180px;
+      max-width: 240px;
       display: flex;
-      flex-wrap: wrap;
+      align-items: baseline;
       gap: 6px;
     }
 
-    .tool-tag {
-      font-size: 0.7rem;
-      padding: 3px 10px;
-      border-radius: 50px;
-      background: rgba(0, 212, 255, 0.12);
-      border: 1px solid rgba(0, 212, 255, 0.25);
-      color: #7dd8f0;
+    .search-wrap::before {
+      content: '/';
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--text-tertiary);
+      font-size: 0.8rem;
     }
 
     #searchInput {
       width: 100%;
-      padding: 15px 25px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
-      font-size: 1rem;
+      border: none;
+      background: none;
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
       outline: none;
-      transition: all 0.3s ease;
-    }
-
-    #searchInput:focus {
-      border-color: #00d4ff;
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+      padding: 2px 0;
     }
 
     #searchInput::placeholder {
-      color: #666;
+      color: var(--text-tertiary);
     }
 
-    .empty-state {
-      grid-column: 1 / -1;
+    /* ---------- index list ---------- */
+    .tools-list {
+      margin-bottom: 80px;
+    }
+
+    .tool-row {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 8px 20px;
+      align-items: baseline;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--border);
+      text-decoration: none;
+      color: var(--text);
+      position: relative;
+      transition: background 0.15s ease;
+    }
+
+    .tool-row:hover {
+      background: linear-gradient(90deg, transparent, var(--accent-soft) 8%, var(--accent-soft) 92%, transparent);
+    }
+
+    .tool-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      transition: color 0.15s ease;
+    }
+
+    .tool-row:hover .tool-num {
+      color: var(--accent);
+    }
+
+    .tool-main {
+      min-width: 0;
+    }
+
+    .tool-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+
+    .tool-row:hover .tool-name::after {
+      content: ' →';
+      color: var(--accent);
+    }
+
+    .tool-description {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      max-width: 460px;
+    }
+
+    .tool-side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      text-align: right;
+    }
+
+    .tool-tags {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+    }
+
+    .tool-type {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    /* ---------- what's new ---------- */
+    .section-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-tertiary);
+      border-bottom: 1px solid var(--border-strong);
+      padding-bottom: 14px;
+      margin-bottom: 0;
+    }
+
+    .whats-new {
+      margin-bottom: 80px;
+    }
+
+    .whats-new-item {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 20px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      align-items: baseline;
+    }
+
+    .whats-new-date {
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--text-tertiary);
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .whats-new-text {
+      color: var(--text-secondary);
+    }
+
+    .whats-new-text strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* ---------- states ---------- */
+    .loading {
       text-align: center;
       padding: 60px;
-      color: #666;
+      color: var(--text-tertiary);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
     }
 
-    .empty-state-icon {
-      font-size: 4rem;
-      margin-bottom: 20px;
-    }
-
-    footer {
+    .error {
       text-align: center;
-      margin-top: 60px;
-      padding-top: 30px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      color: #666;
+      padding: 40px;
+      color: #ef4444;
+      font-family: 'IBM Plex Mono', monospace;
       font-size: 0.85rem;
     }
 
+    .empty-state {
+      text-align: center;
+      padding: 50px;
+      color: var(--text-tertiary);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
+    }
+
+    footer {
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--text-tertiary);
+      font-size: 0.74rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
     footer a {
-      color: #00d4ff;
+      color: var(--text-secondary);
       text-decoration: none;
     }
 
     footer a:hover {
-      text-decoration: underline;
+      color: var(--accent);
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
+      .topbar {
+        margin-bottom: 44px;
+      }
+
       h1 {
-        font-size: 2rem;
+        font-size: 1.6rem;
       }
 
-      .stats {
-        gap: 30px;
+      .tool-row {
+        grid-template-columns: 40px 1fr;
       }
 
-      .stat-value {
-        font-size: 2rem;
+      .tool-side {
+        grid-column: 2;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 12px;
       }
 
-      .tools-grid {
-        grid-template-columns: 1fr;
+      .whats-new-item {
+        grid-template-columns: 40px 1fr;
       }
     }
   </style>
@@ -276,103 +427,103 @@
 
 <body>
   <div class="container">
+    <nav class="topbar">
+      <a href="/" class="wordmark">learnbyllm</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">[theme]</button>
+    </nav>
+
     <header>
-      <h1>🧠 Learning Tools</h1>
-      <p class="subtitle">Interactive visualizations for understanding complex concepts</p>
+      <h1>An index of interactive tools for learning <em>hard things</em>.</h1>
+      <p class="subtitle">Visual, hands-on explanations of language models, data structures, agents,
+        and more. No installs, no sign-ups — everything runs in your browser.</p>
     </header>
 
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-value" id="toolCount">-</div>
-        <div class="stat-label">Tools</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value" id="lastUpdated">-</div>
-        <div class="stat-label">Last Updated</div>
+    <div class="toolbar">
+      <div class="tag-filters" id="tagFilters"></div>
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="search" oninput="filterTools()">
       </div>
     </div>
 
-    <div class="search-container">
-      <input type="text" id="searchInput" placeholder="🔍 Search tools..." oninput="filterTools()">
+    <div class="tools-list" id="toolsGrid">
+      <div class="loading">loading index…</div>
     </div>
 
-    <div class="tag-filters" id="tagFilters"></div>
-
-    <div class="tools-grid" id="toolsGrid">
-      <div class="loading">
-        <div class="loading-spinner"></div>
-        <p>Loading tools...</p>
-      </div>
-    </div>
+    <h2 class="section-title">Changelog</h2>
+    <div class="whats-new" id="whatsNew"></div>
 
     <footer>
-      <p>Powered by <a href="https://pages.github.com" target="_blank">GitHub Pages</a></p>
-      <p style="margin-top: 5px;">Add new tools to the <code>/tools</code> folder and they'll appear here automatically!
-      </p>
+      <p><span id="toolCount">–</span> tools · updated <span id="lastUpdated">–</span></p>
+      <p><a href="https://github.com/LearnbyLLM/LearnbyLLM.github.io" target="_blank" rel="noopener">github ↗</a></p>
     </footer>
   </div>
 
   <script>
     // =============================================
-    // CONFIGURATION - Update these for your repo!
+    // CONFIGURATION
     // =============================================
-    const GITHUB_USERNAME = 'LearnbyLLM';  // ← Updated!
-    const GITHUB_REPO = 'LearnbyLLM.github.io';     // ← Updated!
+    const GITHUB_USERNAME = 'LearnbyLLM';
+    const GITHUB_REPO = 'LearnbyLLM.github.io';
     const TOOLS_FOLDER = 'tools';
     // =============================================
 
-    // Tool metadata - add descriptions and icons for your tools
-    // Keys should match filenames (without .html) or directory names
+    // Tool metadata - add descriptions for your tools.
+    // Keys should match filenames (without .html) or directory names.
+    // `name` overrides the auto-generated display name.
     const toolMetadata = {
       'data-structures': {
-        icon: '📊',
         description: 'Interactive explanations of arrays, stacks, queues, trees, heaps, graphs, and more.',
-        color: '#667eea',
         tags: ['CS Fundamentals']
       },
       'blockchain': {
-        icon: '⛓️',
         description: 'How blockchains work — hashing, blocks, mining, and consensus, explained interactively.',
-        color: '#f59e0b',
         tags: ['CS Fundamentals']
       },
       'llm-intuition': {
-        icon: '🧠',
+        name: 'LLM Intuition',
         description: 'Understand how Large Language Models work through interactive visualizations.',
-        color: '#f093fb',
         tags: ['AI']
       },
       'transformer-explorer': {
-        icon: '🔬',
         description: 'Step inside a transformer — tokenization, embeddings, attention, and next-token prediction, visualized.',
-        color: '#06b6d4',
         tags: ['AI']
       },
       'notebooklm-guide': {
-        icon: '📓',
+        name: 'NotebookLM Guide',
         description: 'A practical guide to using Google\'s NotebookLM for investment research — prompts, workflows, and limitations.',
-        color: '#2563eb',
         tags: ['AI', 'Finance', 'Guide']
       },
       'agentic-frameworks-guide': {
-        icon: '🤖',
         description: 'Build multi-agent systems using Claude Code\'s native features — subagents, hooks, skills, and CLAUDE.md.',
-        color: '#7c3aed',
         tags: ['AI', 'Guide']
       },
     };
 
     // Default metadata for tools without custom info
     const defaultMeta = {
-      icon: '📚',
       description: 'An interactive learning tool.',
-      color: '#00d4ff',
       tags: []
     };
+
+    // Newest first. Keep this list short — only the latest few entries show.
+    const whatsNew = [
+      { date: '2026-06-10', text: '<strong>Site redesign</strong> — a cleaner, minimal look with light and dark themes.' },
+      { date: '2026-06-10', text: 'New tool: <strong>Transformer Explorer</strong> — tokenization, attention, and next-token sampling, visualized step by step.' },
+      { date: '2026-06-10', text: '<strong>Browse by tag</strong> — filter tools by AI, CS Fundamentals, Finance, and Guides.' },
+    ];
+    const WHATS_NEW_LIMIT = 4;
 
     let allTools = [];
     let activeTag = 'All';
 
+    // ---------- theme ----------
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('theme', next);
+    });
+
+    // ---------- data loading ----------
     // Load the tool list from the static tools.json (generated by a GitHub
     // Action — fast, no rate limits). Falls back to the GitHub API if the
     // file is missing.
@@ -412,34 +563,21 @@
             const meta = toolMetadata[key] || defaultMeta;
 
             return {
-              name: displayName,
-              filename: isDir ? 'Guide' : file.name,
+              type: isDir ? 'guide' : 'interactive',
               path: isDir ? `${TOOLS_FOLDER}/${file.name}/` : `${TOOLS_FOLDER}/${file.name}`,
-              ...meta
+              name: displayName,
+              ...meta // metadata may override the auto-generated name
             };
           });
 
-        // Update stats
         document.getElementById('toolCount').textContent = allTools.length;
 
-        // Render tag filter chips and tools
         renderTagFilters();
         filterTools();
 
       } catch (error) {
         console.error('Error fetching tools:', error);
-        grid.innerHTML = `
-                    <div class="error">
-                        <h3>Couldn't load tools</h3>
-                        <p>Make sure the repository and folder exist.</p>
-                        <p style="margin-top: 10px; font-size: 0.85rem;">
-                            Looking for: ${GITHUB_USERNAME}/${GITHUB_REPO}/${TOOLS_FOLDER}
-                        </p>
-                        <p style="margin-top: 15px; color: #888;">
-                            If you just created the repo, try adding a .html file to the /tools folder.
-                        </p>
-                    </div>
-                `;
+        grid.innerHTML = `<div class="error">couldn't load the tool index — try refreshing</div>`;
       }
     }
 
@@ -464,6 +602,7 @@
       }
     }
 
+    // ---------- rendering ----------
     function renderTagFilters() {
       const tags = [...new Set(allTools.flatMap(tool => tool.tags || []))].sort();
       if (tags.length === 0) return;
@@ -487,32 +626,36 @@
       const grid = document.getElementById('toolsGrid');
 
       if (tools.length === 0) {
-        grid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🔍</div>
-                        <h3>No tools found</h3>
-                        <p>Try a different search term</p>
-                    </div>
-                `;
+        grid.innerHTML = `<div class="empty-state">nothing matches — try a different search</div>`;
         return;
       }
 
-      grid.innerHTML = tools.map(tool => `
-                <a href="${tool.path}" class="tool-card">
-                    <div class="tool-icon" style="background: linear-gradient(135deg, ${tool.color}, ${adjustColor(tool.color, -30)});">
-                        ${tool.icon}
+      grid.innerHTML = tools.map((tool, i) => `
+                <a href="${tool.path}" class="tool-row">
+                    <span class="tool-num">${String(i + 1).padStart(2, '0')}</span>
+                    <div class="tool-main">
+                        <span class="tool-name">${tool.name}</span>
+                        <div class="tool-description">${tool.description}</div>
                     </div>
-                    <div class="tool-name">${tool.name}</div>
-                    <div class="tool-description">${tool.description}</div>
-                    ${(tool.tags && tool.tags.length) ? `
-                    <div class="tool-tags">
-                        ${tool.tags.map(tag => `<span class="tool-tag">${tag}</span>`).join('')}
-                    </div>` : ''}
-                    <div class="tool-meta">
-                        ${tool.filename === 'Guide' ? '📖 Guide' : '📄 ' + tool.filename}
+                    <div class="tool-side">
+                        <span class="tool-type">${tool.type}</span>
+                        <span class="tool-tags">${(tool.tags || []).join(' · ')}</span>
                     </div>
                 </a>
             `).join('');
+    }
+
+    function renderWhatsNew() {
+      const container = document.getElementById('whatsNew');
+      container.innerHTML = whatsNew.slice(0, WHATS_NEW_LIMIT).map(item => {
+        const date = new Date(item.date + 'T00:00:00');
+        const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase();
+        return `
+                <div class="whats-new-item">
+                    <span class="whats-new-date">${label}</span>
+                    <span class="whats-new-text">${item.text}</span>
+                </div>`;
+      }).join('');
     }
 
     function filterTools() {
@@ -525,15 +668,6 @@
       );
 
       renderTools(filtered);
-    }
-
-    // Helper to darken/lighten colors
-    function adjustColor(hex, amount) {
-      const num = parseInt(hex.replace('#', ''), 16);
-      const r = Math.min(255, Math.max(0, (num >> 16) + amount));
-      const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
-      const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
-      return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
     }
 
     // Keyboard shortcut for search
@@ -551,6 +685,7 @@
 
     // Initialize
     fetchTools();
+    renderWhatsNew();
   </script>
 </body>
 
