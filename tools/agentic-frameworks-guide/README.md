@@ -1,6 +1,6 @@
 # Agentic Frameworks in Claude Code
 
-<span class="last-updated">Last updated: February 2025</span>
+<span class="last-updated">Last updated: June 2026</span>
 
 A practical guide to building multi-agent systems using Claude Code's native features — no external frameworks needed.
 
@@ -32,9 +32,10 @@ This guide covers:
 
 **This approach is NOT for:**
 - Simple single-step tasks (just use base Claude Code)
-- Real-time streaming coordination between agents
 - Complex state machines requiring external orchestration
-- Systems needing persistent agent memory across sessions
+- Workloads that are mostly API calls (use the [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview) directly)
+
+Two limitations from earlier versions of this guide no longer apply: subagents can now run **in the background concurrently**, and they can keep **persistent memory across sessions** (`memory: project` in frontmatter). Direct agent-to-agent messaging ("agent teams") exists but is still experimental.
 
 > If you take one thing from this guide: **agent boundaries enforce safety and clarity.** The right agent architecture makes dangerous operations impossible, not just unlikely.
 
@@ -71,7 +72,7 @@ Most agentic frameworks add complexity: new CLIs, configuration languages, orche
 **Who should skip this?**
 
 - If your tasks are sequential and simple, you don't need agents
-- If you need persistent memory or state, use a database directly
+- If you need transactional state or queryable history, use a database — subagent `memory` is for accumulated knowledge, not application state
 - If you're not already using Claude Code, start there first
 
 ---
@@ -95,7 +96,7 @@ Compare to a single "do everything" agent: one mistake propagates everywhere.
 
 **Token costs**: Multi-agent systems use more tokens than single-agent flows. The reference implementation typically uses 2-3x tokens versus direct execution. This is a feature, not a bug — you're buying verification and safety.
 
-**Latency**: Agents run sequentially by default (Planner → Executor → Verifier). For the reference implementation, expect 3-5x the latency of single-agent execution. Use parallel execution patterns where possible (see Architecture Patterns).
+**Latency**: The pipeline itself is sequential (Planner → Executor → Verifier), but independent work no longer has to wait: subagents can run in the background while the main session continues, and read-only research can fan out in parallel. For a strictly sequential run, expect 3-5x the latency of single-agent execution (see Architecture Patterns for parallelization).
 
 **When it's worth it**: Complex tasks with high failure cost. Code generation that needs testing. Research requiring source verification. Financial operations needing audit trails.
 
@@ -130,12 +131,12 @@ Each section builds on previous ones. Read sequentially or jump to Templates if 
 
 ## Version and Compatibility
 
-This guide is written for Claude Code as of February 2025. Agent primitives are stable features, but configuration syntax may evolve. Check the changelog for updates.
+This guide is current as of **June 2026**. Agent primitives are stable features, but configuration syntax evolves — check the [changelog](changelog.md) for what changed in each revision, and the [official docs](https://code.claude.com/docs/en/sub-agents) for the latest syntax.
 
-All code examples tested with:
-- Claude Code 1.x
-- Claude Sonnet 4.5
-- macOS and Linux (Windows compatibility assumed but not tested)
+Code examples are written against:
+- Claude Code 2.x (the `claude` CLI)
+- Current models: Claude Opus 4.8 (default), Sonnet 4.6, Haiku 4.5, and Fable 5 — referenced by the `opus` / `sonnet` / `haiku` / `fable` aliases in agent frontmatter
+- macOS and Linux (Windows is supported by Claude Code; examples use POSIX shell)
 
 ---
 

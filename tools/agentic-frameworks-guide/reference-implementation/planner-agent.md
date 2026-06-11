@@ -4,10 +4,15 @@ The Planner Agent decomposes user tasks into atomic, verifiable steps. It operat
 
 ## Agent Definition
 
-Create `.claude/agents/planner.md`:
+Subagents are markdown files with YAML frontmatter: the frontmatter configures the agent (name, delegation description, tool allowlist, model), and the body becomes its system prompt. Create `.claude/agents/planner.md`:
 
 ```markdown
-# Planner Agent
+---
+name: planner
+description: Decomposes a user task into an atomic, verifiable plan written to .claude/runs/<run-id>/plan.md. Use proactively at the start of any agentic run, before any code is written or commands are run.
+tools: Read, Write
+model: opus
+---
 
 You are the Planner Agent in a multi-agent system. Your role is to decompose user tasks into detailed, atomic, verifiable plans.
 
@@ -103,6 +108,16 @@ Write your plan to: .claude/runs/<run-id>/plan.md
 The run-id will be provided to you when you're invoked.
 ```
 
+## Why These Frontmatter Choices
+
+**`tools: Read, Write`** is the enforcement mechanism for everything in the "cannot do" list. The Planner has no Bash (can't execute), no WebFetch or WebSearch (can't reach external resources), and no Glob or Grep (can't go spelunking through the repo). The system prompt tells it not to; the allowlist makes sure. `Read` is there for trusted inputs only — CLAUDE.md loads automatically, and the Planner may read prior Researcher findings from `.claude/runs/`.
+
+**`model: opus`** because decomposition quality is the highest-leverage decision in the whole pipeline. A sloppy plan poisons the Executor and the Verifier downstream. Opus is the right spend here; the Executor runs on cheaper Sonnet precisely because the Planner did the hard thinking.
+
+**`description`** is what drives automatic delegation. "Use proactively at the start of any agentic run" tells the main session when to reach for this agent without being asked. You can also force it explicitly: `@agent-planner break down this task`, or ask in plain language ("have the planner decompose this"). For debugging the Planner's prompt in isolation, run `claude --agent planner` to start a whole session as the Planner.
+
+Note that subagents receive only this system prompt plus basic environment details — not the full Claude Code system prompt. CLAUDE.md and project memory still load, which is exactly what the trust model wants: the Planner sees the protocol, not the noise.
+
 ## Example Plan Output
 
 Here's what a Planner output looks like for the task "Add user authentication to the API":
@@ -110,8 +125,8 @@ Here's what a Planner output looks like for the task "Add user authentication to
 ```markdown
 # Plan: Add User Authentication to API
 
-**Run ID**: 2026-02-05-14-30-22
-**Created**: 2026-02-05 14:30:22
+**Run ID**: 2026-06-11-14-30-22
+**Created**: 2026-06-11 14:30:22
 **Planner Agent**: v1.0.0
 
 ---

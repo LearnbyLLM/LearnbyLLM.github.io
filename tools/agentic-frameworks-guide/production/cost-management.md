@@ -12,6 +12,15 @@ Five primary cost drivers:
 4. **Retries** - Failed runs that retry multiply costs
 5. **Research breadth** - Researcher agent fetching many sources
 
+Current pricing (per million tokens, June 2026):
+
+| Model | Input | Output | Use for |
+|-------|-------|--------|---------|
+| Haiku 4.5 (`haiku`) | $1 | $5 | Checking, summarizing, search |
+| Sonnet 4.6 (`sonnet`) | $3 | $15 | Implementation, most agents |
+| Opus 4.8 (`opus`, the default) | $5 | $25 | Complex reasoning, planning |
+| Fable 5 (`fable`) | $10 | $50 | The hardest problems only |
+
 Example cost breakdown for a typical PEV run:
 
 ```
@@ -20,113 +29,108 @@ Task: "Add input validation to signup form"
 Planner agent:
   - Input: 500 tokens (system prompt + task description)
   - Output: 800 tokens (plan.md)
-  - Cost: ~1300 tokens
 
 Executor agent:
-  - Input: 1200 tokens (system prompt + plan + codebase context)
-  - Tool calls: 5 tools × 300 tokens average = 1500 tokens
+  - Input: 2700 tokens (system prompt + plan + tool results)
   - Output: 600 tokens (execution.md)
-  - Cost: ~3300 tokens
 
 Verifier agent:
   - Input: 2000 tokens (system prompt + plan + execution + files to verify)
   - Output: 500 tokens (verdict.md)
-  - Cost: ~2500 tokens
 
-Total: ~7100 tokens = ~$0.04 (using Opus pricing)
+Total: 5200 input + 1900 output tokens
+On Opus 4.8 (default): 5200 × $5/M + 1900 × $25/M ≈ $0.07
 ```
 
 This is one successful run. If the verifier returns FAIL and you re-plan + re-execute, double the cost.
 
 ## Strategies to Reduce Cost
 
-### 1. Use Haiku for Simple Agents
+### 1. Match Models to Roles
 
-Not all agents need Opus or Sonnet. Reserve expensive models for complex reasoning.
+Not all agents need Opus, let alone Fable. Reserve expensive models for complex reasoning.
 
 **Good model allocation:**
 
-- Planner: Sonnet or Opus (requires complex reasoning)
+- Planner: Opus (requires complex reasoning; Fable only for genuinely hard architecture work)
 - Executor: Sonnet (needs to interpret plan and handle edge cases)
 - Verifier: Haiku (mostly checking against criteria)
 - Researcher: Haiku (summarizing sources, not creating novel reasoning)
 
-Configure per-agent models in `.claude/agents/`:
+Configure per-agent models with the `model` alias in subagent frontmatter:
 
 ```markdown
 # .claude/agents/verifier.md
-
-model: claude-haiku-3-5
-
-# Verifier Agent
+---
+name: verifier
+description: Verifies execution against the plan's success criteria
+model: haiku
+---
 
 You verify that execution meets the plan's success criteria...
 ```
 
 ```markdown
 # .claude/agents/planner.md
-
-model: claude-sonnet-4-5
-
-# Planner Agent
+---
+name: planner
+description: Creates detailed execution plans
+model: opus
+---
 
 You create detailed execution plans...
 ```
 
-**Cost comparison:**
+Aliases (`haiku`, `sonnet`, `opus`, `fable`) track the current best model in each tier, so you don't update files on every release; pin a full ID like `claude-opus-4-8` only when you need version stability. The `CLAUDE_CODE_SUBAGENT_MODEL` environment variable overrides all subagent model settings at once.
+
+**Cost comparison (same 5200 in / 1900 out run):**
 
 ```
-Original (all Opus):
-- Planner: 1300 tokens × $15/1M = $0.0195
-- Executor: 3300 tokens × $15/1M = $0.0495
-- Verifier: 2500 tokens × $15/1M = $0.0375
-Total: $0.1065 per run
+All Opus 4.8 (default):
+- Planner:  500 × $5/M  +  800 × $25/M = $0.0225
+- Executor: 2700 × $5/M +  600 × $25/M = $0.0285
+- Verifier: 2000 × $5/M +  500 × $25/M = $0.0225
+Total: ~$0.074 per run
 
 Optimized (Sonnet planner/executor, Haiku verifier):
-- Planner: 1300 tokens × $3/1M = $0.0039
-- Executor: 3300 tokens × $3/1M = $0.0099
-- Verifier: 2500 tokens × $0.25/1M = $0.000625
-Total: $0.0144 per run
+- Planner:  500 × $3/M  +  800 × $15/M = $0.0135
+- Executor: 2700 × $3/M +  600 × $15/M = $0.0171
+- Verifier: 2000 × $1/M +  500 × $5/M  = $0.0045
+Total: ~$0.035 per run
 
-Savings: 86%
+Savings: ~52% — and far more at scale, since executor and
+verifier token volume dominates real runs
 ```
+
+**Also tune effort.** On models that support it, the effort level (`low`, `medium`, `high`, `xhigh`, `max`) controls how much thinking a request burns. Set it per subagent or skill in frontmatter (`effort: low` is plenty for a checklist-style verifier), persist a session default with the `effortLevel` setting, or change it live with `/effort`.
 
 ### 2. Keep Agent Context Focused
 
-Each agent should only see what it needs.
+Each agent should only see what it needs. Subagents already help here — they start with a clean context window and return only a summary to the parent, so delegation is itself a context-management tool.
 
-**Bad - verifier sees entire codebase:**
+**Bad - verifier told to ingest the world:**
 
 ```bash
-claude-code --agent verifier \
-  --execution execution.md \
-  --context "$(cat src/**/*.js)"  # Huge context
+claude --agent verifier -p "Verify the auth changes. Read every file in src/ first so you have full context."
 ```
 
-**Good - verifier sees only modified files:**
+**Good - verifier reads only what the execution log names:**
 
 ```bash
-# Extract modified files from execution.md
-MODIFIED_FILES=$(grep "File:" execution.md | cut -d: -f2)
-
-# Pass only those files
-claude-code --agent verifier \
-  --execution execution.md \
-  --context "$MODIFIED_FILES"
+claude --agent verifier -p "Verify .claude/runs/2026-06-10-add-auth/execution.md \
+against its plan. Read ONLY the files listed in the execution log."
 ```
 
 **Focused context in agent definitions:**
 
 ```markdown
-# .claude/agents/executor.md
-
-# Executor Agent
+# .claude/agents/executor.md (body)
 
 ## Context Requirements
 
 You will receive:
 - The plan to execute (plan.md)
-- File paths mentioned in the plan (read on demand, don't include in initial context)
+- File paths mentioned in the plan (read on demand, don't bulk-read upfront)
 - Previous execution state (if retrying)
 
 You do NOT need:
@@ -163,24 +167,21 @@ Research everything about the topic. Fetch all relevant documentation, blog post
 - If first 5 sources are insufficient, report INSUFFICIENT_DATA rather than fetching more
 ```
 
-**Enforce limits in researcher agent code:**
+**Enforce the bound mechanically with `maxTurns`** — prompt instructions are advice; the frontmatter cap is a hard stop:
 
-```python
-# .claude/agents/researcher.py
-
-MAX_SOURCES = 5
-MAX_PAGES_PER_SOURCE = 2
-
-def research(query):
-    sources = search(query)[:MAX_SOURCES]  # Hard cap
-
-    findings = []
-    for source in sources:
-        content = fetch(source, max_pages=MAX_PAGES_PER_SOURCE)
-        findings.append(summarize(content))
-
-    return synthesize(findings)
+```markdown
+# .claude/agents/researcher.md
+---
+name: researcher
+description: Bounded research with explicit uncertainty reporting
+tools: WebSearch, WebFetch, Read
+model: haiku
+effort: low
+maxTurns: 15
+---
 ```
+
+A runaway research loop now terminates after 15 agentic turns no matter what the model decides.
 
 ### 4. Avoid Retries When Possible
 
@@ -246,7 +247,7 @@ if [ -f "$CACHE_FILE" ]; then
     cat "$CACHE_FILE"
 else
     echo "Researching: $QUERY"
-    claude-code --agent researcher --query "$QUERY" > "$CACHE_FILE"
+    claude --agent researcher -p "$QUERY" > "$CACHE_FILE"
     cat "$CACHE_FILE"
 fi
 ```
@@ -258,176 +259,82 @@ fi
 find .claude/cache/research -type f -mtime +7 -delete
 ```
 
-**Or use content-addressed caching:**
-
-```python
-# .claude/scripts/cached_research.py
-import hashlib
-import json
-import os
-from pathlib import Path
-
-CACHE_DIR = Path(".claude/cache/research")
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
-def cached_research(query, max_age_days=7):
-    """Research with caching. Returns cached result if fresh enough."""
-
-    # Generate cache key from query
-    cache_key = hashlib.sha256(query.encode()).hexdigest()
-    cache_file = CACHE_DIR / f"{cache_key}.json"
-
-    # Check if cached result exists and is fresh
-    if cache_file.exists():
-        cache_age = time.time() - cache_file.stat().st_mtime
-        if cache_age < max_age_days * 86400:
-            with open(cache_file) as f:
-                return json.load(f)["result"]
-
-    # Cache miss - do research
-    result = run_researcher(query)
-
-    # Cache the result
-    with open(cache_file, "w") as f:
-        json.dump({"query": query, "result": result, "timestamp": time.time()}, f)
-
-    return result
-```
+(API-level prompt caching also works in your favor automatically — repeated system prompts and stable context are billed at the much cheaper `cacheRead` rate. One more reason to keep agent definitions stable rather than dynamically generated.)
 
 ## Estimating Cost Per Run
 
 Rough formula:
 
 ```
-Cost per run = Sum of (agent_tokens × model_price)
+Cost per run = Σ per agent: input_tokens × input_price + output_tokens × output_price
 
 Where:
-  agent_tokens = context_size + output_size + tool_call_overhead
-  tool_call_overhead ≈ num_tools × 300 tokens
+  input_tokens includes system prompt, plan/context, and tool results
+  tool_call_overhead ≈ num_tools × 300 tokens (counts as input)
 ```
 
 **Example estimation:**
 
 ```python
-# Cost estimator
-def estimate_run_cost(
-    num_planner_tokens=1300,
-    num_executor_tokens=3300,
-    num_verifier_tokens=2500,
-    planner_model="sonnet",
-    executor_model="sonnet",
-    verifier_model="haiku"
-):
-    prices = {
-        "opus": 15 / 1_000_000,      # $15 per 1M tokens
-        "sonnet": 3 / 1_000_000,     # $3 per 1M tokens
-        "haiku": 0.25 / 1_000_000    # $0.25 per 1M tokens
-    }
+# Cost estimator — prices per million tokens (June 2026)
+PRICES = {
+    "haiku":  (1, 5),
+    "sonnet": (3, 15),
+    "opus":   (5, 25),
+    "fable":  (10, 50),
+}
 
-    cost = (
-        num_planner_tokens * prices[planner_model] +
-        num_executor_tokens * prices[executor_model] +
-        num_verifier_tokens * prices[verifier_model]
+def agent_cost(model, input_tokens, output_tokens):
+    inp, out = PRICES[model]
+    return input_tokens * inp / 1e6 + output_tokens * out / 1e6
+
+def estimate_run_cost():
+    return (
+        agent_cost("sonnet", 500, 800)     # planner
+        + agent_cost("sonnet", 2700, 600)  # executor
+        + agent_cost("haiku", 2000, 500)   # verifier
     )
 
-    return cost
-
-# Typical run
-print(f"Cost: ${estimate_run_cost():.4f}")  # $0.0144
-
-# Complex run with research
-print(f"Cost: ${estimate_run_cost(
-    num_planner_tokens=2000,
-    num_executor_tokens=5000,
-    num_verifier_tokens=3000
-):.4f}")  # $0.0237
+print(f"Cost: ${estimate_run_cost():.4f}")  # ~$0.035
 ```
 
 ## Monitoring Costs Over Time
 
-Track token usage per run:
+**In-session:** run `/usage` for a per-category breakdown — it attributes consumption to skills, subagents, plugins, and MCP servers, which is exactly the granularity you need to find the expensive role.
+
+**In production:** don't build a homegrown token logger — Claude Code exports cost metrics via OpenTelemetry:
 
 ```bash
-# .claude/hooks/log_tokens.py
-import json
-from pathlib import Path
-
-def post_agent_run(agent_name, tokens_used, context):
-    run_id = context["run_id"]
-    log_file = Path(f".claude/runs/{run_id}/tokens.json")
-
-    data = {}
-    if log_file.exists():
-        with open(log_file) as f:
-            data = json.load(f)
-
-    data[agent_name] = tokens_used
-
-    with open(log_file, "w") as f:
-        json.dump(data, f, indent=2)
+export CLAUDE_CODE_ENABLE_TELEMETRY=1
+export OTEL_METRICS_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://collector.internal:4317
 ```
 
-Aggregate across runs:
+The two metrics that matter:
 
-```bash
-# Total tokens by agent type
-for run in .claude/runs/*/; do
-    if [ -f "$run/tokens.json" ]; then
-        cat "$run/tokens.json"
-    fi
-done | jq -s 'map(to_entries) | flatten | group_by(.key) | map({agent: .[0].key, total: map(.value) | add})'
+- `claude_code.cost.usage` (USD) — with `model`, `query_source` (`main`/`subagent`/`auxiliary`), `effort`, and `agent.name` attributes
+- `claude_code.token.usage` — with `type` (`input`/`output`/`cacheRead`/`cacheCreation`), `model`, and the same attribution
+
+A dashboard grouped by `agent.name` answers "which agent is costing us money" directly:
+
+```
+sum(claude_code.cost.usage) by (agent.name)
+
+planner   $12.40
+executor  $48.10   ← optimization target
+verifier  $6.20
 ```
 
-Output:
+Tag teams with `OTEL_RESOURCE_ATTRIBUTES="team.id=platform"` to split cost by team across the org.
 
-```json
-[
-  {"agent": "planner", "total": 45000},
-  {"agent": "executor", "total": 120000},
-  {"agent": "verifier", "total": 35000}
-]
-```
-
-**Cost dashboard:**
+**Quick local report** from the artifact convention, if you're not running a collector:
 
 ```bash
 #!/bin/bash
 # .claude/scripts/cost_report.sh
-
-echo "Cost Report for $(date +%Y-%m)"
-echo "================================"
-
-TOTAL_TOKENS=0
-TOTAL_COST=0
-
-for run in .claude/runs/$(date +%Y-%m)-*/; do
-    if [ -f "$run/tokens.json" ]; then
-        RUN_TOKENS=$(cat "$run/tokens.json" | jq '[.[]] | add')
-        TOTAL_TOKENS=$((TOTAL_TOKENS + RUN_TOKENS))
-    fi
-done
-
-# Assuming average $3/1M tokens
-TOTAL_COST=$(echo "scale=2; $TOTAL_TOKENS * 3 / 1000000" | bc)
-
-echo "Total tokens: $TOTAL_TOKENS"
-echo "Estimated cost: \$$TOTAL_COST"
-echo ""
 echo "Runs this month: $(ls -d .claude/runs/$(date +%Y-%m)-*/ 2>/dev/null | wc -l)"
+echo "Failed (likely retried, double-cost) runs:"
+grep -l "# Verdict: FAIL" .claude/runs/$(date +%Y-%m)-*/verdict.md 2>/dev/null
 ```
 
-Run monthly:
-
-```bash
-./claude/scripts/cost_report.sh
-
-# Output:
-# Cost Report for 2025-02
-# ================================
-# Total tokens: 450000
-# Estimated cost: $1.35
-#
-# Runs this month: 42
-```
-
-This gives visibility into costs and helps identify optimization opportunities.
+Failed-then-retried runs are usually the biggest cost leak — which loops this section back to strategy #4: the cheapest run is the one you don't repeat.

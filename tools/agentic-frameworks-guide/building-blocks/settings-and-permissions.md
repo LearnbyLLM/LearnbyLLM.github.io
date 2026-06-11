@@ -1,56 +1,86 @@
 # Settings & Permissions
 
-`.claude/settings.json` controls what Claude can and cannot do. It defines the sandbox boundary for your multi-agent system.
+`settings.json` controls what Claude can and cannot do. Together with the native sandbox, it defines the enforcement boundary for your multi-agent system — the rules that hold no matter what the model decides.
 
-## Key Settings
+## Settings Files & Precedence
+
+Settings resolve in this order (highest wins):
+
+```
+Managed policy settings (org-deployed, cannot be overridden)
+  ↓
+CLI arguments (session overrides, e.g. --permission-mode)
+  ↓
+.claude/settings.local.json (project-local, gitignored)
+  ↓
+.claude/settings.json (project, shared via git)
+  ↓
+~/.claude/settings.json (user)
+```
+
+A deny rule at *any* level blocks the action — a project allow can't override a user-level deny, and nothing overrides managed settings. For agentic frameworks: put your framework's guardrails in project `.claude/settings.json` (versioned, reviewed), personal tweaks in `settings.local.json`.
+
+## Basic Structure
 
 ```json
 {
-  "allowedTools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
-  "deniedTools": ["WebSearch", "WebFetch"],
-  "sandbox": true,
-  "networkAccess": false,
-  "hooks": {
-    "PreToolUse": [...],
-    "PostToolUse": [...]
-  }
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "claude-opus-4-8",
+  "permissions": {
+    "defaultMode": "default",
+    "allow": ["Bash(npm run *)", "Read(~/.zshrc)"],
+    "ask": ["Bash(git push *)"],
+    "deny": ["Read(//**/.env)", "Bash(curl *)"]
+  },
+  "env": {"DEBUG": "1"},
+  "hooks": { "...": "see hooks.md" }
 }
 ```
 
-## Allowed Tools
+The `$schema` line gets you autocomplete and validation in most editors — use it. The old `allowedTools`/`deniedTools`/`networkAccess`/`bashRestrictions` keys you may see in pre-2025 write-ups never shipped in this form; permission **rules** are the real mechanism.
 
-Whitelist of tools Claude can use:
+## Permission Rules
 
-```json
-{
-  "allowedTools": [
-    "Read",
-    "Write",
-    "Edit",
-    "Bash",
-    "Grep",
-    "Glob",
-    "WebSearch",
-    "WebFetch",
-    "Skill",
-    "NotebookEdit"
-  ]
-}
-```
+Rules have the form `Tool` or `Tool(specifier)`, sorted into three lists:
 
-If `allowedTools` is not specified, all tools are allowed by default.
+- **allow**: use without prompting
+- **ask**: always prompt
+- **deny**: block outright
 
-## Denied Tools
+Evaluation order is deny → ask → allow; first match wins, regardless of specificity.
 
-Blacklist of tools Claude cannot use:
+### Rule Syntax
 
-```json
-{
-  "deniedTools": ["Bash", "WebFetch"]
-}
-```
+| Rule | Effect |
+|------|--------|
+| `Bash(npm run build)` | Exact command |
+| `Bash(npm run *)` | Prefix glob. The space before `*` is a word boundary: `Bash(ls *)` matches `ls -la`, not `lsof` |
+| `Bash` or `Bash(*)` | All Bash commands |
+| `Read(./.env)` | Specific file, relative to cwd |
+| `Read(//**/.env)` | Any `.env` anywhere on the filesystem (`//` = absolute root) |
+| `Edit(/src/**/*.ts)` | Relative to project root (single `/`) |
+| `Read(~/.config/*)` | Home-relative |
+| `WebFetch(domain:github.com)` | Fetches to one domain |
+| `mcp__github__*` | All tools from the `github` MCP server |
+| `Agent(researcher)` | Spawning a specific subagent |
+| `Skill(deploy *)` | Invoking a specific skill (with any args) |
 
-`deniedTools` takes precedence over `allowedTools`.
+Two sharp edges worth knowing. First, `Bash(curl http://github.com/ *)`-style argument constraints are fragile (flags, redirects, variables all evade them) — deny `curl`/`wget` and grant `WebFetch(domain:...)` instead, or enforce with a PreToolUse hook. Second, Claude Code splits compound commands: `Bash(safe-cmd *)` does not approve `safe-cmd && rm -rf .`; each subcommand must match a rule.
+
+## Permission Modes
+
+Set via `permissions.defaultMode`, the `/permissions` UI, `--permission-mode` on the CLI, or per-subagent `permissionMode` frontmatter:
+
+| Mode | Behavior |
+|------|----------|
+| `default` | Prompt on first use of each tool |
+| `acceptEdits` | Auto-accept file edits and filesystem commands in the working directory |
+| `plan` | Read-only exploration; no edits |
+| `auto` | Auto-approve with background safety checks (research preview) |
+| `dontAsk` | Auto-deny everything not pre-approved by allow rules |
+| `bypassPermissions` | Skip prompts entirely (explicit `ask` rules and `rm -rf /`-class circuit breakers still prompt) |
+
+For pipelines: give the executor `permissionMode: acceptEdits`, keep the planner in `plan`. Reserve `bypassPermissions` for containers/VMs, and note orgs can disable it (`permissions.disableBypassPermissionsMode: "disable"`).
 
 ## Example: Agentic Framework Settings
 
@@ -58,461 +88,239 @@ Blacklist of tools Claude cannot use:
 
 ```json
 {
-  "allowedTools": [
-    "Read",
-    "Write",
-    "Edit",
-    "Bash",
-    "Grep",
-    "Glob",
-    "Skill"
-  ],
-  "deniedTools": [],
-  "sandbox": true,
-  "bashRestrictions": {
-    "deniedCommands": [
-      "rm -rf /",
-      "sudo",
-      "dd",
-      "mkfs",
-      "curl",
-      "wget",
-      "ssh",
-      "scp"
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Bash(npm test *)",
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(pytest *)",
+      "Bash(cargo test *)",
+      "Edit(/src/**)",
+      "Edit(/tests/**)",
+      "Skill(agentic-run *)",
+      "Skill(deep-research *)"
     ],
-    "allowedCommands": [
-      "npm test",
-      "pytest",
-      "cargo test",
-      "go test",
-      "npm run lint",
-      "npm run build"
+    "ask": [
+      "Bash(git push *)",
+      "Bash(npm publish *)"
+    ],
+    "deny": [
+      "Read(//**/.env)",
+      "Read(~/.ssh/**)",
+      "Edit(/.claude/**)",
+      "Edit(//**/.env)",
+      "Bash(sudo *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Agent(Explore)"
     ]
   },
-  "networkAccess": false,
+  "sandbox": {
+    "enabled": true
+  },
   "hooks": {
     "PreToolUse": [
       {
-        "name": "protect_files",
-        "command": ".claude/hooks/protect_files.py"
-      },
-      {
-        "name": "bash_guard",
-        "command": ".claude/hooks/bash_guard.py"
-      },
-      {
-        "name": "network_guard",
-        "command": ".claude/hooks/network_guard.py"
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/bash_guard.py"}
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "name": "audit_log",
-        "command": ".claude/hooks/audit_log.py"
-      }
-    ]
-  },
-  "agents": {
-    "planner": {
-      "allowedTools": ["Read", "Grep", "Glob"],
-      "deniedTools": ["Write", "Edit", "Bash"]
-    },
-    "executor": {
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
-      "deniedTools": ["WebSearch", "WebFetch"],
-      "bashRestrictions": {
-        "allowedCommands": ["npm test", "npm run build", "pytest"]
-      }
-    },
-    "verifier": {
-      "allowedTools": ["Read", "Bash", "Grep", "Glob"],
-      "deniedTools": ["Write", "Edit", "WebSearch", "WebFetch"],
-      "bashRestrictions": {
-        "allowedCommands": ["npm test", "npm run lint", "pytest", "cargo test"]
-      }
-    },
-    "researcher": {
-      "allowedTools": ["Read", "Grep", "Glob", "WebSearch", "WebFetch"],
-      "deniedTools": ["Write", "Edit", "Bash"]
-    }
-  }
-}
-```
-
-## Permission Hierarchy
-
-Settings are resolved in this order (later overrides earlier):
-
-```
-User settings (~/.claude/settings.json)
-  ↓ overrides
-Project settings (<project-root>/.claude/settings.json)
-  ↓ overrides
-Agent-level constraints (.claude/settings.json → agents.<name>)
-  ↓ overrides
-Runtime flags (--allow-network, --deny-tool, etc.)
-```
-
-## Agent-Level Settings
-
-Override settings per agent:
-
-```json
-{
-  "agents": {
-    "executor": {
-      "allowedTools": ["Read", "Write", "Edit", "Bash"],
-      "deniedTools": ["WebSearch", "WebFetch"],
-      "sandbox": true,
-      "networkAccess": false
-    },
-    "researcher": {
-      "allowedTools": ["Read", "WebSearch", "WebFetch"],
-      "deniedTools": ["Write", "Edit", "Bash"],
-      "networkAccess": true
-    }
-  }
-}
-```
-
-When you run `claude --agent executor`, Claude uses the executor settings.
-
-## Sandbox Mode
-
-```json
-{
-  "sandbox": true
-}
-```
-
-Sandbox mode:
-- Restricts file system access to project directory
-- Blocks writes outside project
-- Isolates Claude from system
-
-For agentic frameworks, always use `sandbox: true`.
-
-## Network Access
-
-```json
-{
-  "networkAccess": false
-}
-```
-
-`networkAccess: false`:
-- Blocks WebSearch
-- Blocks WebFetch
-- Blocks network commands in Bash (curl, wget, ssh, etc.)
-
-Use this for executor and verifier agents. Only researcher should have network access.
-
-## Bash Restrictions
-
-Fine-grained control over bash commands:
-
-```json
-{
-  "bashRestrictions": {
-    "deniedCommands": [
-      "rm -rf /",
-      "sudo",
-      "curl | bash"
-    ],
-    "allowedCommands": [
-      "npm test",
-      "pytest",
-      "cargo test"
-    ],
-    "allowPattern": "^(npm|pytest|cargo)\\s+(test|build|lint)",
-    "denyPattern": "(sudo|rm\\s+-rf\\s+/)"
-  }
-}
-```
-
-**deniedCommands**: Exact string matches (blocked)
-**allowedCommands**: Exact string matches (allowed)
-**allowPattern**: Regex for allowed commands
-**denyPattern**: Regex for denied commands
-
-If `allowedCommands` is set, only those commands are allowed (whitelist mode).
-
-## Example: Per-Agent Bash Restrictions
-
-```json
-{
-  "agents": {
-    "executor": {
-      "bashRestrictions": {
-        "allowedCommands": [
-          "npm test",
-          "npm run build",
-          "pytest",
-          "cargo test"
+        "matcher": "*",
+        "hooks": [
+          {"type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/audit_log.py", "async": true}
         ]
-      }
-    },
-    "verifier": {
-      "bashRestrictions": {
-        "allowedCommands": [
-          "npm test",
-          "npm run lint",
-          "pytest --cov",
-          "cargo clippy"
-        ]
-      }
-    }
-  }
-}
-```
-
-Executor can build. Verifier cannot build (only test/lint).
-
-## Pre-Tool Hooks for Validation
-
-Settings define what's allowed. Hooks enforce it.
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "name": "validate_permissions",
-        "command": ".claude/hooks/validate_permissions.py"
       }
     ]
   }
 }
 ```
 
-`.claude/hooks/validate_permissions.py`:
+Note what's *not* here: per-agent tool restrictions. Those moved into each agent's frontmatter (`tools`, `disallowedTools`, `permissionMode`) — see [Subagents](subagents.md). Settings rules apply session-wide; agent frontmatter scopes restrictions to one role. `Agent(name)` deny rules are the settings-side lever: they control which subagents can be spawned at all.
 
-```python
-#!/usr/bin/env python3
-import sys
-import json
-import os
+## The Native Sandbox
 
-def main():
-    event = json.loads(sys.stdin.read())
-    settings_file = '.claude/settings.json'
+Claude Code now ships OS-level sandboxing for Bash — filesystem and network isolation applied to commands and their child processes, which permission rules alone can't reach (a Python script that opens `.env` itself bypasses `Read` deny rules; the sandbox doesn't care).
 
-    with open(settings_file) as f:
-        settings = json.load(f)
-
-    tool_name = event.get('tool_name')
-    agent_name = os.environ.get('CLAUDE_AGENT_NAME', 'default')
-
-    # Get agent-specific settings
-    agent_settings = settings.get('agents', {}).get(agent_name, {})
-
-    # Check denied tools
-    denied = agent_settings.get('deniedTools', [])
-    if tool_name in denied:
-        print(json.dumps({
-            'allowed': False,
-            'reason': f'{agent_name} agent cannot use {tool_name}'
-        }))
-        sys.exit(1)
-
-    # Check allowed tools (whitelist mode)
-    allowed = agent_settings.get('allowedTools')
-    if allowed and tool_name not in allowed:
-        print(json.dumps({
-            'allowed': False,
-            'reason': f'{tool_name} not in allowed tools for {agent_name}'
-        }))
-        sys.exit(1)
-
-    print(json.dumps({'allowed': True}))
-    sys.exit(0)
-
-if __name__ == '__main__':
-    main()
+```json
+{
+  "sandbox": {
+    "enabled": true,
+    "filesystem": {
+      "allowRead": ["/tmp"],
+      "denyRead": ["~/.ssh"],
+      "allowWrite": ["/tmp"],
+      "denyWrite": ["~/.ssh"]
+    },
+    "network": {
+      "allowedDomains": ["github.com", "registry.npmjs.org"],
+      "deniedDomains": ["internal.company.local"]
+    },
+    "autoAllowBashIfSandboxed": true
+  }
+}
 ```
+
+Sandbox filesystem bounds merge with your `Read`/`Edit` deny rules; network bounds merge with `WebFetch(domain:...)` rules. With `autoAllowBashIfSandboxed: true` (the default), sandboxed Bash commands run without prompting — the sandbox boundary replaces the prompt. This is the single biggest UX win for agentic work: the executor runs freely *inside* the box instead of asking permission to do anything.
+
+This replaces the old advice to set `"networkAccess": false` (a setting that never existed). Network control is sandbox `allowedDomains` + Bash deny rules for `curl`/`wget` + `WebFetch(domain:...)` allow rules.
+
+## Per-Agent Restrictions
+
+The old pattern of an `"agents": {...}` block in settings.json is not a real mechanism. Role-based restriction lives in three real places:
+
+**Agent frontmatter** (`.claude/agents/executor.md`):
+```yaml
+---
+name: executor
+tools: Read, Write, Edit, Bash, Grep, Glob
+disallowedTools: WebSearch, WebFetch
+permissionMode: acceptEdits
+---
+```
+
+**Settings**, to control which agents exist at all:
+```json
+{
+  "permissions": {
+    "deny": ["Agent(Explore)"]
+  }
+}
+```
+
+**Hooks in agent frontmatter**, for conditional rules (allow some Bash commands, block others) — see [Hooks](hooks.md).
 
 ## How Permissions Interact with Agent Definitions
 
-Belt-and-suspenders approach:
+Belt-and-suspenders, three layers:
 
-**Agent definition** (`.claude/agents/executor.md`):
-```markdown
-## Forbidden Tools
+1. **Prompt** (agent markdown body): "never touch `.env`" — probabilistic, shapes intent
+2. **Permissions + frontmatter** (`deny` rules, `tools` allowlist): enforced by Claude Code on every tool call
+3. **Sandbox + hooks**: OS-level and programmatic enforcement, covers what rules can't express
 
-NEVER use:
-- WebSearch
-- WebFetch
-```
+Even if the agent "forgets" the prompt, layers 2 and 3 hold. Permission rules are enforced by the client, not the model — nothing in CLAUDE.md or a system prompt can loosen them.
 
-**Settings** (`.claude/settings.json`):
-```json
-{
-  "agents": {
-    "executor": {
-      "deniedTools": ["WebSearch", "WebFetch"]
-    }
-  }
-}
-```
+## Other Settings Worth Knowing
 
-**Hook** (`.claude/hooks/network_guard.py`):
-```python
-if agent_name == 'executor':
-    if tool_name in ['WebSearch', 'WebFetch']:
-        # Block it
-```
+`settings.json` has grown to 50+ keys. Beyond `permissions`, `sandbox`, and `hooks`, the ones that matter for agentic frameworks:
 
-Three layers of protection:
-1. Prompt (agent definition) — probabilistic
-2. Settings — configuration-based
-3. Hook — deterministic enforcement
+| Key | What it does |
+|-----|--------------|
+| `model` | Default model for the session (Opus 4.8 / `claude-opus-4-8` is the current default; Sonnet 4.6, Haiku 4.5, and Fable 5 / `claude-fable-5` are also available) |
+| `env` | Environment variables for every session — handy for `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` and friends |
+| `autoMemoryEnabled` | Claude's self-maintained per-project memory (default `true`) |
+| `claudeMdExcludes` | Glob patterns of CLAUDE.md files to skip (monorepos) |
+| `additionalDirectories` | Extra directories Claude may access (under `permissions`) |
+| `allowedMcpServers` / `deniedMcpServers` | MCP server allow/deny lists |
+| `skillOverrides` | Adjust skill visibility without editing SKILL.md files |
 
-Even if the agent "forgets" the prompt, settings and hooks enforce the rule.
+Org admins get managed-only keys like `allowManagedPermissionRulesOnly`, `allowManagedHooksOnly`, and `strictPluginOnlyCustomization` (block skills/agents/hooks from user and project sources entirely) — relevant if you're deploying an agentic framework across a team.
 
-## Example: Complete Settings File
+## Example: Locked-Down Executor Project
 
-`.claude/settings.json`:
+A fuller project settings file for a pipeline where agents do real work unattended:
 
 ```json
 {
-  "allowedTools": [
-    "Read",
-    "Write",
-    "Edit",
-    "Bash",
-    "Grep",
-    "Glob",
-    "Skill",
-    "WebSearch",
-    "WebFetch"
-  ],
-  "deniedTools": [],
-  "sandbox": true,
-  "networkAccess": true,
-  "bashRestrictions": {
-    "deniedCommands": [
-      "rm -rf /",
-      "sudo",
-      "dd if=",
-      "mkfs",
-      ":(){ :|:& };:"
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(pytest *)",
+      "Edit(/src/**)",
+      "Edit(/tests/**)",
+      "Edit(/.claude/runs/**)",
+      "WebFetch(domain:docs.python.org)",
+      "Agent(planner)",
+      "Agent(executor)",
+      "Agent(verifier)",
+      "Agent(researcher)"
     ],
-    "denyPattern": "(sudo|rm\\s+-rf\\s+/|>\\s*/dev/sd)"
+    "ask": [
+      "Bash(git push *)"
+    ],
+    "deny": [
+      "Read(//**/.env)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Edit(/.claude/settings.json)",
+      "Edit(/.claude/agents/**)",
+      "Edit(/.claude/hooks/**)",
+      "Bash(sudo *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(ssh *)",
+      "Bash(scp *)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": {
+      "allowedDomains": ["registry.npmjs.org", "pypi.org"]
+    }
   },
   "hooks": {
     "PreToolUse": [
-      {
-        "name": "protect_files",
-        "command": ".claude/hooks/protect_files.py",
-        "description": "Block writes to .claude/, .env, .git/"
-      },
-      {
-        "name": "bash_guard",
-        "command": ".claude/hooks/bash_guard.py",
-        "description": "Validate bash commands against deny list"
-      },
-      {
-        "name": "network_guard",
-        "command": ".claude/hooks/network_guard.py",
-        "description": "Restrict network access by agent"
-      }
+      {"matcher": "Bash", "hooks": [
+        {"type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/bash_guard.py"}
+      ]}
     ],
     "PostToolUse": [
-      {
-        "name": "audit_log",
-        "command": ".claude/hooks/audit_log.py",
-        "description": "Log all tool usage"
-      }
+      {"matcher": "*", "hooks": [
+        {"type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/audit_log.py", "async": true}
+      ]}
     ],
-    "Notification": [
-      {
-        "name": "notify_slack",
-        "command": ".claude/hooks/notify_slack.py",
-        "description": "Send notifications to Slack on errors"
-      }
+    "SubagentStop": [
+      {"matcher": "*", "hooks": [
+        {"type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/audit_log.py", "async": true}
+      ]}
     ]
-  },
-  "agents": {
-    "planner": {
-      "allowedTools": ["Read", "Grep", "Glob"],
-      "deniedTools": ["Write", "Edit", "Bash", "WebSearch", "WebFetch"],
-      "networkAccess": false
-    },
-    "executor": {
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
-      "deniedTools": ["WebSearch", "WebFetch"],
-      "networkAccess": false,
-      "bashRestrictions": {
-        "allowedCommands": [
-          "npm test",
-          "npm run build",
-          "npm run lint",
-          "pytest",
-          "pytest --cov",
-          "cargo test",
-          "cargo build",
-          "go test"
-        ]
-      }
-    },
-    "verifier": {
-      "allowedTools": ["Read", "Bash", "Grep", "Glob"],
-      "deniedTools": ["Write", "Edit", "WebSearch", "WebFetch"],
-      "networkAccess": false,
-      "bashRestrictions": {
-        "allowedCommands": [
-          "npm test",
-          "npm run lint",
-          "pytest --cov",
-          "cargo clippy",
-          "cargo test",
-          "go test"
-        ]
-      }
-    },
-    "researcher": {
-      "allowedTools": ["Read", "Grep", "Glob", "WebSearch", "WebFetch"],
-      "deniedTools": ["Write", "Edit", "Bash"],
-      "networkAccess": true
-    }
   }
 }
 ```
 
+Notice the self-protection deny rules: agents can't edit the settings, agent definitions, or hooks that constrain them. That closes the most embarrassing failure mode in agentic systems — the agent that "fixes" its own guardrails.
+
 ## Runtime Flags
 
-Override settings with CLI flags:
+Real CLI overrides (these sit above project/user settings, below managed policy):
 
 ```bash
-# Allow network for one-off research
-claude --agent executor --allow-network "task"
+# Add allow/deny rules for one session
+claude --allowedTools "Bash(npm test *)"
+claude --disallowedTools "Agent(Explore)" "WebFetch"
 
-# Deny a specific tool
-claude --deny-tool Bash "task"
+# Set the permission mode
+claude --permission-mode plan
 
-# Disable sandbox (dangerous!)
-claude --no-sandbox "task"
+# Define one-off subagents as JSON (testing)
+claude --agents '{"reviewer": {"description": "...", "prompt": "..."}}'
+
+# Skip all permission checks — containers/CI only
+claude --dangerously-skip-permissions
 ```
 
-Use runtime flags sparingly. Settings files are safer (version controlled, reviewed).
+Flags like `--allow-network`, `--deny-tool`, and `--no-sandbox` from older write-ups don't exist. Use settings files for anything permanent — they're version controlled and reviewed.
 
 ## Tips
 
-**Start restrictive**: Begin with minimal permissions. Add as needed.
+**Start restrictive**: Begin in `default` mode with a tight allow list. Widen as friction demands, not preemptively.
 
-**Version control settings**: Track `.claude/settings.json` in git. Review changes carefully.
+**Version control settings**: Track `.claude/settings.json` in git. Review changes like code — a loosened deny rule is a security diff.
 
-**Test agent permissions**: Run each agent with `--dry-run` to verify it has the tools it needs.
+**Deny by path, not by hope**: `Read(//**/.env)` and `Edit(/.claude/**)` deny rules are one line each. Write them before you need them.
 
-**Layer defenses**: Use settings AND hooks. Don't rely on prompts alone.
+**Sandbox first, prompts second**: `sandbox.enabled: true` removes most permission prompts *and* most risk at the same time. It should be your default for executor-style agents.
 
-**Document exceptions**: If you allow a risky tool, comment why in settings.json:
+**Mind the deny-anywhere rule**: any scope's deny wins. If an agent mysteriously can't do something, run `/permissions` to see every rule and which file it came from.
 
-```json
-{
-  "allowedTools": ["Bash"],
-  "_comment": "Bash needed for test execution only. Restricted by bashRestrictions."
-}
-```
+**Audit regularly**: Review `.claude/audit.jsonl` (from your PostToolUse hook) to see what agents actually do, then tighten rules around reality instead of guesses.
 
-**Audit regularly**: Review `.claude/audit.jsonl` to see what agents are actually doing.
+Full reference: [code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings) and [code.claude.com/docs/en/permissions](https://code.claude.com/docs/en/permissions)

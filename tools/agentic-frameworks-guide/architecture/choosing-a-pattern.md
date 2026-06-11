@@ -47,6 +47,8 @@ Does the task modify code or infrastructure?
 
 ## Pattern Details
 
+A note on the examples below: `/pev`, `/orchestrate`, and `/research-pev` are project skills — `.claude/skills/<name>/SKILL.md` files whose instructions delegate to your subagents in `.claude/agents/`. They are not built-in commands; see [Copy-Paste Hooks](../templates/copy-paste-hooks.md#skill-templates) for working templates. Skills run in-session as `/name args`, or non-interactively via `claude -p "/name args"`.
+
 ### Single Agent
 Use when:
 - Task is trivial (fix typo, format file)
@@ -55,7 +57,7 @@ Use when:
 
 Example:
 ```bash
-claude chat --prompt "Fix typo in README.md: change 'teh' to 'the'"
+claude -p "Fix typo in README.md: change 'teh' to 'the'"
 ```
 
 ### PEV (Planner-Executor-Verifier)
@@ -65,8 +67,8 @@ Use when:
 - Verification is required before deployment
 
 Example:
-```bash
-claude skill pev "Refactor authentication module to use JWT tokens"
+```text
+/pev Refactor authentication module to use JWT tokens
 ```
 
 Agents involved:
@@ -81,13 +83,13 @@ Use when:
 - Subtasks are independent
 
 Example:
-```bash
-claude skill orchestrate "Update all API endpoints to use new error handling middleware"
+```text
+/orchestrate Update all API endpoints to use new error handling middleware
 ```
 
 Agents involved:
-- Orchestrator: Splits task, assigns to workers, merges results
-- Workers (N): Execute subtasks in parallel
+- Orchestrator: The main session — splits the task, spawns workers as background subagents, merges results
+- Workers (N): Execute subtasks in parallel (use `isolation: worktree` so they can't conflict)
 
 ### Research + PEV
 Use when:
@@ -96,8 +98,8 @@ Use when:
 - Implementation follows research findings
 
 Example:
-```bash
-claude skill research-pev "Implement rate limiting for our API using industry best practices"
+```text
+/research-pev Implement rate limiting for our API using industry best practices
 ```
 
 Agents involved:
@@ -113,54 +115,57 @@ Use when:
 - Single agent can handle it with a script
 
 Example:
-```bash
-claude skill deploy "Deploy to staging, run smoke tests, notify team"
+```text
+/deploy staging
 ```
 
 Agents involved:
-- Single agent executes skill (bash script with multiple steps)
+- Single agent following a skill (a SKILL.md with step-by-step instructions, plus any supporting scripts in the skill's directory)
 
 ## Hybrid Approaches
 
 Patterns can be combined for complex tasks.
 
 ### Hybrid 1: Research + PEV
-Research agent feeds findings to the Planner. Use when external knowledge is required before planning.
+Research agent feeds findings to the Planner. Use when external knowledge is required before planning. The skill instructions chain four delegations:
 
-```bash
-# research-pev.sh
-RUN_ID=$(date +%s)
-claude chat --agent researcher --prompt "Research: $TASK"
-claude chat --agent planner --prompt "Plan based on: .claude/runs/$RUN_ID/research/findings.md"
-claude chat --agent executor --prompt "Execute: .claude/runs/$RUN_ID/plan.md"
-claude chat --agent verifier --prompt "Verify: .claude/runs/$RUN_ID/execution.md"
+```markdown
+<!-- .claude/skills/research-pev/SKILL.md (body) -->
+For: $ARGUMENTS
+
+1. Delegate to the `researcher` subagent. It writes
+   `.claude/runs/<RUN_ID>/research/findings.md`.
+2. Delegate to the `planner` subagent with the findings file. It writes
+   `plan.md`. Show me the plan and wait for approval.
+3. Delegate to the `executor` subagent with the plan. It writes
+   `execution.md`.
+4. Delegate to the `verifier` subagent with both files. Report the verdict.
 ```
 
 ### Hybrid 2: Orchestrator + PEV
-Each worker runs a PEV workflow internally. Use when parallel subtasks each require verification.
+Each worker runs a plan-execute-verify loop internally. Use when parallel subtasks each require verification. Remember that subagents cannot spawn subagents — so the worker can't delegate to a separate planner/executor/verifier. Instead, bake the PEV discipline into the worker's own system prompt:
 
-```bash
-# orchestrator-pev.sh
-# Orchestrator splits task into subtasks
-claude chat --agent orchestrator --prompt "Split: $TASK"
-
-# Each worker runs PEV
-for subtask in "${SUBTASKS[@]}"; do
-  claude skill pev "$subtask" &
-done
-wait
-
-# Orchestrator merges results
-claude chat --agent orchestrator --prompt "Merge PEV outputs"
+```markdown
+<!-- in .claude/agents/pev-worker.md (body) -->
+For your assigned subtask, work in three strict phases:
+1. PLAN: write plan.md with steps and success criteria before touching code
+2. EXECUTE: follow the plan exactly, logging each step to execution.md
+3. VERIFY: re-read your changes against the success criteria and write
+   verdict.md (PASS/FAIL). Report FAIL honestly.
 ```
 
-### Hybrid 3: Research + Orchestrator-Workers
-Researcher gathers knowledge, Orchestrator splits based on findings. Use when parallel tasks require external context.
+The orchestrating session then spawns these workers in parallel and audits the verdicts — or re-runs the standalone verifier agent over each worker's output for an independent check.
 
-```bash
-# research-orchestrator.sh
-claude chat --agent researcher --prompt "Research frameworks for $TASK"
-claude chat --agent orchestrator --prompt "Split $TASK based on research, assign to workers"
+### Hybrid 3: Research + Orchestrator-Workers
+Researcher gathers knowledge, then the session splits work based on findings. Use when parallel tasks require external context.
+
+```text
+@agent-researcher Research current best practices for $TASK.
+Write findings to .claude/runs/<RUN_ID>/research/findings.md
+
+# then, in the same session:
+/orchestrate Apply the recommendations from
+.claude/runs/<RUN_ID>/research/findings.md across all services
 ```
 
 ## Rule of Thumb
@@ -183,7 +188,7 @@ Start simple, add complexity only when needed:
 **Reason:** Well-scoped, low-risk change. No verification needed beyond tests.
 
 ```bash
-claude chat --prompt "Fix off-by-one error in src/pagination.js"
+claude -p "Fix off-by-one error in src/pagination.js"
 ```
 
 ### Refactoring Authentication
@@ -193,8 +198,8 @@ claude chat --prompt "Fix off-by-one error in src/pagination.js"
 
 **Reason:** Requires external knowledge (JWT best practices). Safety-critical (authentication). Needs verification.
 
-```bash
-claude skill research-pev "Refactor authentication to JWT tokens"
+```text
+/research-pev Refactor authentication to JWT tokens
 ```
 
 ### Updating All Config Files
@@ -202,10 +207,10 @@ claude skill research-pev "Refactor authentication to JWT tokens"
 
 **Pattern:** Orchestrator-Workers
 
-**Reason:** Embarrassingly parallel. Each package.json is independent.
+**Reason:** Embarrassingly parallel. Each package.json is independent. Workers on `haiku` keep it cheap.
 
-```bash
-claude skill orchestrate "Update all package.json to use Node 18"
+```text
+/orchestrate Update all package.json to use Node 18
 ```
 
 ### Formatting Codebase
@@ -213,10 +218,10 @@ claude skill orchestrate "Update all package.json to use Node 18"
 
 **Pattern:** Single Agent + Skill
 
-**Reason:** Single command, but might take time. Use skill for automation.
+**Reason:** Single command, but might take time. Use a skill for automation, and run it in the background (Ctrl+B) while you keep working.
 
-```bash
-claude skill format "Run Prettier on all JS files"
+```text
+/format all JS files
 ```
 
 ### Deploying to Production
@@ -226,8 +231,8 @@ claude skill format "Run Prettier on all JS files"
 
 **Reason:** Safety-critical. Planner defines deployment steps, Executor deploys, Verifier runs smoke tests.
 
-```bash
-claude skill pev "Deploy to production with smoke tests and rollback"
+```text
+/pev Deploy to production with smoke tests and rollback
 ```
 
 ### Analyzing Competitors
@@ -235,10 +240,10 @@ claude skill pev "Deploy to production with smoke tests and rollback"
 
 **Pattern:** Research Agent only
 
-**Reason:** Read-only task. No execution needed.
+**Reason:** Read-only task. No execution needed. Run it as a background subagent and keep working.
 
-```bash
-claude chat --agent researcher --prompt "Research competitor search implementations"
+```text
+@agent-researcher Research competitor search implementations
 ```
 
 ## Anti-Patterns
@@ -247,13 +252,13 @@ claude chat --agent researcher --prompt "Research competitor search implementati
 Do not use PEV for trivial tasks.
 
 **Bad:**
-```bash
-claude skill pev "Fix typo in README.md"
+```text
+/pev Fix typo in README.md
 ```
 
 **Good:**
 ```bash
-claude chat --prompt "Fix typo in README.md"
+claude -p "Fix typo in README.md"
 ```
 
 ### Under-Engineering
@@ -261,14 +266,14 @@ Do not use single agent for safety-critical tasks.
 
 **Bad:**
 ```bash
-claude chat --prompt "Refactor authentication and deploy to production"
+claude -p "Refactor authentication and deploy to production"
 ```
 
 **Good:**
-```bash
-claude skill pev "Refactor authentication to JWT tokens"
+```text
+/pev Refactor authentication to JWT tokens
 # Then separately:
-claude skill pev "Deploy to production with rollback plan"
+/pev Deploy to production with rollback plan
 ```
 
 ### Ignoring Parallelism
@@ -276,16 +281,18 @@ Do not use PEV for embarrassingly parallel tasks.
 
 **Bad:**
 ```bash
-# Sequential execution
+# Sequential execution: one session at a time, each paying full startup
+# and context cost
 for endpoint in "${ENDPOINTS[@]}"; do
-  claude chat --prompt "Refactor $endpoint"
+  claude -p "Refactor $endpoint"
 done
 ```
 
 **Good:**
-```bash
-# Parallel execution
-claude skill orchestrate "Refactor all endpoints: ${ENDPOINTS[*]}"
+```text
+# Parallel execution: one session spawns background workers concurrently,
+# isolated in their own worktrees
+/orchestrate Refactor all endpoints to the new middleware
 ```
 
 ## When in Doubt
